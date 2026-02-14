@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>スマート割り勘 | モバイル専用割り勘計算ツール</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide-react@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .animate-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script>
+        // Lucide Icons initialization helper (Robust version)
+        window.getIcon = function (name) {
+            // Priority 1: Check LucideReact (React Components)
+            if (window.LucideReact && window.LucideReact[name]) return window.LucideReact[name];
+
+            // Priority 2: Check Lucide (Core Data) and wrap it
+            if (window.lucide && window.lucide[name]) {
+                const iconData = window.lucide[name];
+
+                // If it's the raw data array [tag, attrs, children]
+                if (Array.isArray(iconData)) {
+                    return function (props) {
+                        const renderNode = (node, key) => {
+                            if (!node || !Array.isArray(node)) return null;
+                            const [tag, attrs, children] = node;
+                            const combinedAttrs = key !== undefined ? { ...attrs, key } : attrs;
+                            return React.createElement(tag, combinedAttrs,
+                                children ? children.map((c, i) => renderNode(c, i)) : null
+                            );
+                        };
+
+                        // The iconData from Lucide core is typically the array of children for the SVG
+                        // We need to wrap it in an SVG tag
+                        return React.createElement('svg', {
+                            xmlns: 'http://www.w3.org/2000/svg',
+                            width: '24',
+                            height: '24',
+                            viewBox: '0 0 24 24',
+                            fill: 'none',
+                            stroke: 'currentColor',
+                            strokeWidth: '2',
+                            strokeLinecap: 'round',
+                            strokeLinejoin: 'round',
+                            ...props
+                        }, iconData.map((c, i) => renderNode(c, i)));
+                    };
+                }
+
+                // If it's somehow already a component or function
+                if (typeof iconData === 'function') return iconData;
+            }
+
+            // Priority 3: Last resort fallback (Emoji based or safe div)
+            const fallbacks = {
+                Wallet: '💰',
+                Users: '👥',
+                Plus: '＋',
+                Trash2: '🗑️',
+                ChevronDown: '▼',
+                Check: '✅'
+            };
+
+            return (props) => React.createElement('span', {
+                ...props,
+                style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', ...props.style }
+            }, fallbacks[name] || '•');
+        };
+
+        // Pre-define icons used in the app as ready-to-use components
+        window.Icons = {
+            Users: (props) => React.createElement(window.getIcon('Users'), { className: 'w-5 h-5 text-indigo-500', ...props }),
+            Plus: (props) => React.createElement(window.getIcon('Plus'), { className: 'w-3 h-3', ...props }),
+            Trash2: (props) => React.createElement(window.getIcon('Trash2'), { className: 'w-5 h-5', ...props }),
+            Wallet: (props) => React.createElement(window.getIcon('Wallet'), { className: 'w-6 h-6', ...props }),
+            RefreshCw: (props) => React.createElement(window.getIcon('RefreshCw'), { className: 'w-6 h-6', ...props }),
+            ChevronDown: (props) => React.createElement(window.getIcon('ChevronDown'), { className: 'w-3 h-3 text-slate-400', ...props }),
+            Check: (props) => React.createElement(window.getIcon('Check'), { className: 'w-4 h-4', ...props })
+        };
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { Wallet, Users, Plus, Trash2, ChevronDown, Check, RefreshCw } = window.Icons;
+
+        const WEIGHTS = {
+            VERY_HIGH: { label: '多め', value: 1.4 },
+            HIGH: { label: 'やや多め', value: 1.2 },
+            NORMAL: { label: '普通', value: 1.0 },
+            LOW: { label: 'やや少ない', value: 0.8 },
+            VERY_LOW: { label: '少ない', value: 0.6 }
+        };
+
+        const App = () => {
+            const [totalAmount, setTotalAmount] = useState(0);
+            const [members, setMembers] = useState([
+                { id: '1', name: 'メンバー1', weight: 'NORMAL' },
+                { id: '2', name: 'メンバー2', weight: 'NORMAL' }
+            ]);
+            const [prepayments, setPrepayments] = useState([]);
+            const [splitStyle, setSplitStyle] = useState('ROUGH'); // 'ROUGH' or 'DETAILED'
+
+            // 計算ロジック
+            const results = useMemo(() => {
+                if (totalAmount <= 0 || members.length === 0) return [];
+
+                // 先払いの合計
+                const totalPrepaid = prepayments.reduce((sum, p) => sum + p.amount, 0);
+                // 割り勘対象額 (負の数にならないように調整)
+                const remainingToSplit = Math.max(0, totalAmount - totalPrepaid);
+
+                // 合計重み
+                const totalWeight = members.reduce((sum, m) => sum + WEIGHTS[m.weight].value, 0);
+
+                const unit = splitStyle === 'ROUGH' ? 500 : 10;
+
+                // 各メンバーの負担額算出
+                const memberResults = members.map(member => {
+                    const weightValue = WEIGHTS[member.weight].value;
+                    // 指定単位で切り上げ
+                    const splitShare = totalWeight > 0 ? Math.ceil((remainingToSplit * (weightValue / totalWeight)) / unit) * unit : 0;
+
+                    // そのメンバーが先払いしていた合計額
+                    const memberPrepaid = prepayments
+                        .filter((p, idx) => (p.name || `先払い${idx + 1}`) === member.name)
+                        .reduce((sum, p) => sum + p.amount, 0);
+
+                    // 最終的な収支: 負担額 - 自分が先払いした額
+                    // 正なら「払う」、負なら「もらう」
+                    const settlement = splitShare - memberPrepaid;
+
+                    return {
+                        ...member,
+                        share: splitShare,
+                        memberPrepaid, // デバッグ/表示用
+                        settlement
+                    };
+                });
+
+                // メンバーリストにはいないが、先払いだけした人の抽出
+                const externalPrepayers = prepayments
+                    .filter((p, idx) => !members.some(m => m.name === (p.name || `先払い${idx + 1}`)))
+                    .reduce((acc, p, idx) => {
+                        const displayName = p.name || `先払い${idx + 1}`;
+                        const existing = acc.find(a => a.name === displayName);
+                        if (existing) {
+                            existing.amount += p.amount;
+                        } else {
+                            acc.push({ name: displayName, amount: p.amount });
+                        }
+                        return acc;
+                    }, [])
+                    .map(ep => ({
+                        id: `ext-${ep.name}`,
+                        name: ep.name,
+                        share: 0,
+                        memberPrepaid: ep.amount,
+                        settlement: -ep.amount // 全額「もらう」
+                    }));
+
+                const finalResults = [...memberResults, ...externalPrepayers];
+
+                // お釣りの計算
+                const totalShares = memberResults.reduce((sum, r) => sum + r.share, 0);
+                const surplus = totalShares - remainingToSplit;
+
+                return {
+                    list: finalResults,
+                    surplus: Math.max(0, surplus)
+                };
+            }, [totalAmount, members, prepayments, splitStyle]);
+
+            const sumPrepaid = useMemo(() => prepayments.reduce((sum, p) => sum + p.amount, 0), [prepayments]);
+            const remainingToSplit = Math.max(0, totalAmount - sumPrepaid);
+            const displayResults = results.list || [];
+            const surplusAmount = results.surplus || 0;
+
+            const addMember = () => {
+                const newId = Math.random().toString(36).substr(2, 9);
+                setMembers([...members, { id: newId, name: `メンバー${members.length + 1}`, weight: 'NORMAL' }]);
+            };
+
+            const addPrepayment = () => {
+                const newId = Math.random().toString(36).substr(2, 9);
+                setPrepayments([...prepayments, { id: newId, name: `先払い${prepayments.length + 1}`, amount: 0 }]);
+            };
+
+            const removeMember = (id) => {
+                if (members.length > 1) {
+                    setMembers(members.filter(m => m.id !== id));
+                }
+            };
+
+            const removePrepayment = (id) => {
+                setPrepayments(prepayments.filter(p => p.id !== id));
+            };
+
+            const updateMember = (id, field, value) => {
+                setMembers(members.map(m => m.id === id ? { ...m, [field]: value } : m));
+            };
+
+            const updatePrepayment = (id, field, value) => {
+                setPrepayments(prepayments.map(p => p.id === id ? { ...p, [field]: value } : p));
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 pb-20 px-4 pt-6 font-sans text-slate-900">
+                    <header className="mb-8 text-center">
+                        <h1 className="text-2xl font-bold text-indigo-600 flex items-center justify-center gap-2">
+                            <Wallet />
+                            スマート割り勘
+                        </h1>
+                        <p className="text-slate-500 text-sm mt-1 text-balance">比率を選んでスマートに計算</p>
+                    </header>
+
+                    <main className="max-w-md mx-auto space-y-6">
+                        {/* 合計金額入力 */}
+                        <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                            <label className="block text-sm font-medium text-slate-500 mb-2">会計時の合計金額</label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    placeholder="0"
+                                    className="w-full text-3xl font-bold py-2 border-b-2 border-slate-100 focus:border-indigo-500 outline-none transition-colors"
+                                    value={totalAmount || ''}
+                                    onChange={(e) => setTotalAmount(Number(e.target.value))}
+                                />
+                                <span className="absolute right-0 bottom-3 text-slate-400 font-medium">円</span>
+                            </div>
+                        </section>
+
+                        {/* 割り勘スタイル切替 */}
+                        <section className="bg-slate-100 p-1 rounded-xl flex gap-1">
+                            <button
+                                onClick={() => setSplitStyle('ROUGH')}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${splitStyle === 'ROUGH' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                ざっくり (500円単位)
+                            </button>
+                            <button
+                                onClick={() => setSplitStyle('DETAILED')}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${splitStyle === 'DETAILED' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                詳細 (10円単位)
+                            </button>
+                        </section>
+
+                        {/* 先払い登録セクション */}
+                        <section className="bg-slate-100/50 rounded-2xl p-5 border border-slate-200/50">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                    <Check /> 先払い(個別支払い)登録
+                                </h2>
+                                <button
+                                    onClick={addPrepayment}
+                                    className="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-100 px-2.5 py-1 rounded-full active:scale-95 transition-transform"
+                                >
+                                    + 追加
+                                </button>
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                                {prepayments.map((p) => (
+                                    <div key={p.id} className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
+                                        <input
+                                            type="text"
+                                            placeholder="名前"
+                                            className="flex-1 bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-sm text-slate-600 shadow-sm focus:ring-2 focus:ring-indigo-100 outline-none"
+                                            value={p.name}
+                                            onChange={(e) => updatePrepayment(p.id, 'name', e.target.value)}
+                                        />
+                                        <div className="relative w-28">
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="0"
+                                                className="w-full bg-white border border-slate-200 rounded-lg py-1.5 pl-3 pr-6 text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-100 outline-none"
+                                                value={p.amount || ''}
+                                                onChange={(e) => updatePrepayment(p.id, 'amount', Number(e.target.value))}
+                                            />
+                                            <span className="absolute right-2 top-1.5 text-[10px] text-slate-400">円</span>
+                                        </div>
+                                        <button onClick={() => removePrepayment(p.id)} className="p-1.5 text-slate-300 hover:text-red-400 transition-colors">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {prepayments.length === 0 && (
+                                    <p className="text-center text-[10px] text-slate-400 py-2 border border-dashed border-slate-200 rounded-lg">先払いの登録はありません</p>
+                                )}
+                            </div>
+
+                            {prepayments.length > 0 && (
+                                <div className="bg-white/60 p-3 rounded-xl space-y-1 mt-4">
+                                    <div className="flex justify-between text-[11px] text-slate-500">
+                                        <span>先払い合計</span>
+                                        <span className="font-bold">{sumPrepaid.toLocaleString()}円</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-indigo-600 font-bold pt-1 border-t border-slate-200/50">
+                                        <span>残りの割り勘額</span>
+                                        <span>{remainingToSplit.toLocaleString()}円</span>
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+
+                        {/* メンバーリスト */}
+                        <section className="space-y-3">
+                            <div className="flex items-center justify-between px-1">
+                                <h2 className="text-lg font-semibold flex items-center gap-2">
+                                    <Users />
+                                    メンバー設定
+                                </h2>
+                                <button
+                                    onClick={addMember}
+                                    className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition-transform"
+                                >
+                                    <Plus /> 追加
+                                </button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {displayResults.filter(r => !r.id.toString().startsWith('ext-')).map((res) => (
+                                    <div key={res.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div className="flex items-center gap-2">
+                                            {/* 名前入力 */}
+                                            <input
+                                                type="text"
+                                                className="flex-1 font-medium border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none text-slate-700 bg-slate-50 transition-all min-w-0"
+                                                value={res.name}
+                                                onChange={(e) => updateMember(res.id, 'name', e.target.value)}
+                                            />
+
+                                            {/* 負担割合 */}
+                                            <div className="relative shrink-0">
+                                                <select
+                                                    className="text-[10px] bg-slate-100 border-none rounded-lg py-1.5 pl-2 pr-6 text-slate-600 focus:ring-2 focus:ring-indigo-200 appearance-none outline-none"
+                                                    value={res.weight}
+                                                    onChange={(e) => updateMember(res.id, 'weight', e.target.value)}
+                                                >
+                                                    {Object.entries(WEIGHTS).map(([key, info]) => (
+                                                        <option key={key} value={key}>{info.label}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none scale-75">
+                                                    <ChevronDown />
+                                                </div>
+                                            </div>
+
+                                            {/* 金額 */}
+                                            <div className="text-right shrink-0 min-w-[70px]">
+                                                <div className="text-base font-bold text-slate-800">
+                                                    {res.share > 0 ? `${res.share.toLocaleString()}円` : '0円'}
+                                                </div>
+                                            </div>
+
+                                            {/* 削除 */}
+                                            <button
+                                                onClick={() => removeMember(res.id)}
+                                                disabled={members.length <= 1}
+                                                className="p-1 text-slate-300 hover:text-red-400 transition-colors disabled:opacity-0 shrink-0"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* 精算アクション (もらう/払う) */}
+                        {displayResults.some(r => r.settlement !== 0) && (
+                            <section className="bg-indigo-600 rounded-2xl p-6 text-white shadow-xl shadow-indigo-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-bold flex items-center gap-2">
+                                        <RefreshCw className="w-5 h-5" /> 最終的な精算
+                                    </h2>
+                                    {surplusAmount > 0 && (
+                                        <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold animate-pulse">
+                                            お釣り: {surplusAmount.toLocaleString()}円
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-4">
+                                    {displayResults.filter(r => r.settlement !== 0).map((res) => (
+                                        <div key={res.id} className="flex items-center justify-between border-b border-indigo-400 pb-3 last:border-0 last:pb-0">
+                                            <div>
+                                                <span className="text-sm font-bold">{res.name}</span>
+                                                {res.id.toString().startsWith('ext-') && <span className="text-[10px] ml-1 bg-white/20 px-1 rounded">先払いのみ</span>}
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-xl font-mono font-bold">
+                                                    {res.settlement > 0 ? `${res.settlement.toLocaleString()}円 払う` :
+                                                        `${Math.abs(res.settlement).toLocaleString()}円 もらう`}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+                    </main>
+
+                    <footer className="mt-12 text-center text-slate-400 text-[10px]">
+                        &copy; 2026 Smart Warikan Tool
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
