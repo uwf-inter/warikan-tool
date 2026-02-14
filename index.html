@@ -3,6 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5ZQZCG5P');</script>
+    <!-- End Google Tag Manager -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>スマート割り勘 | モバイル専用割り勘計算ツール</title>
 
@@ -30,11 +40,18 @@
     <script src="https://unpkg.com/lucide-react@latest"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        :root {
+            --ios-safe-bottom: env(safe-area-inset-bottom);
+        }
 
         body {
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: contain;
+            font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+            font-size: 16px;
+            /* Prevents auto-zoom on iOS */
         }
 
         input[type="number"]::-webkit-inner-spin-button,
@@ -43,14 +60,31 @@
             margin: 0;
         }
 
-        .animate-in {
-            animation: fadeIn 0.4s ease-out;
+        /* 48px Touch Target compliance */
+        input,
+        button,
+        select {
+            min-height: 48px;
         }
 
-        @keyframes fadeIn {
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .shadow-premium {
+            box-shadow: 0 10px 30px -10px rgba(79, 70, 229, 0.15);
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(20px);
             }
 
             to {
@@ -62,6 +96,10 @@
 </head>
 
 <body class="bg-gray-50">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5ZQZCG5P" height="0" width="0"
+            style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
 
     <script>
@@ -260,195 +298,215 @@
             };
 
             return (
-                <div className="min-h-screen bg-slate-50 pb-20 px-4 pt-6 font-sans text-slate-900">
-                    <header className="mb-8 text-center">
-                        <h1 className="text-2xl font-bold text-indigo-600 flex items-center justify-center gap-2">
-                            <Wallet />
-                            スマート割り勘
-                        </h1>
-                        <p className="text-slate-500 text-sm mt-1 text-balance">比率を選んでスマートに計算</p>
+                <div className="min-h-screen bg-[#FDFDFF] pb-32 font-sans text-slate-900 overflow-x-hidden">
+                    {/* Header */}
+                    <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 py-4 px-6 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-indigo-600 p-2 rounded-xl shadow-indigo-200 shadow-lg">
+                                <Wallet className="text-white w-5 h-5" />
+                            </div>
+                            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">
+                                スマート割り勘
+                            </h1>
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Mobile First</div>
                     </header>
 
-                    <main className="max-w-md mx-auto space-y-6">
-                        {/* 合計金額入力 */}
-                        <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                            <label className="block text-sm font-medium text-slate-500 mb-2">会計時の合計金額</label>
-                            <div className="relative">
+                    <main className="max-w-xl mx-auto space-y-8 p-4 md:p-6 animate-slide-up">
+                        {/* 1. 合計金額セクション */}
+                        <section className="bg-white rounded-3xl p-6 shadow-premium border border-slate-100 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 -z-10 opacity-50"></div>
+                            <label className="block text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">Total Amount</label>
+                            <div className="relative flex items-end">
                                 <input
                                     type="number"
                                     inputMode="numeric"
                                     placeholder="0"
-                                    className="w-full text-3xl font-bold py-2 border-b-2 border-slate-100 focus:border-indigo-500 outline-none transition-colors"
+                                    className="w-full text-5xl font-bold py-2 border-none focus:ring-0 outline-none transition-colors placeholder:text-slate-100 text-indigo-900"
                                     value={totalAmount || ''}
                                     onChange={(e) => setTotalAmount(Number(e.target.value))}
                                 />
-                                <span className="absolute right-0 bottom-3 text-slate-400 font-medium">円</span>
+                                <span className="text-2xl font-bold text-slate-300 ml-2 mb-3">円</span>
                             </div>
                         </section>
 
-                        {/* 割り勘スタイル切替 */}
-                        <section className="bg-slate-100 p-1 rounded-xl flex gap-1">
-                            <button
-                                onClick={() => setSplitStyle('ROUGH')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${splitStyle === 'ROUGH' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                            >
-                                ざっくり (500円単位)
-                            </button>
-                            <button
-                                onClick={() => setSplitStyle('DETAILED')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${splitStyle === 'DETAILED' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                            >
-                                詳細 (10円単位)
-                            </button>
-                        </section>
+                        {/* 2. スタイル & 先払い概要 */}
+                        <div className="grid grid-cols-1 gap-4">
+                            <section className="bg-slate-200/50 p-1.5 rounded-2xl flex gap-1.5 h-14">
+                                <button
+                                    onClick={() => setSplitStyle('ROUGH')}
+                                    className={`flex-1 flex items-center justify-center text-sm font-bold rounded-xl transition-all ${splitStyle === 'ROUGH' ? 'bg-white text-indigo-600 shadow-sm scale-[1.02]' : 'text-slate-500 hover:text-slate-600'}`}
+                                >
+                                    ざっくり
+                                    <span className="ml-1 opacity-50 text-[10px]">500円</span>
+                                </button>
+                                <button
+                                    onClick={() => setSplitStyle('DETAILED')}
+                                    className={`flex-1 flex items-center justify-center text-sm font-bold rounded-xl transition-all ${splitStyle === 'DETAILED' ? 'bg-white text-indigo-600 shadow-sm scale-[1.02]' : 'text-slate-500 hover:text-slate-600'}`}
+                                >
+                                    詳細
+                                    <span className="ml-1 opacity-50 text-[10px]">10円</span>
+                                </button>
+                            </section>
 
-                        {/* 先払い登録セクション */}
-                        <section className="bg-slate-100/50 rounded-2xl p-5 border border-slate-200/50">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                    <Check /> 先払い(個別支払い)登録
+                            {sumPrepaid > 0 && (
+                                <section className="bg-indigo-50 rounded-3xl p-6 border border-indigo-100/50 flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest"> 対象額</div>
+                                        <div className="text-2xl font-bold text-indigo-600">{remainingToSplit.toLocaleString()}円</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">先払い計</div>
+                                        <div className="text-sm font-bold text-slate-500">{sumPrepaid.toLocaleString()}円</div>
+                                    </div>
+                                </section>
+                            )}
+                        </div>
+
+                        {/* 3. 先払い登録 */}
+                        <section>
+                            <div className="flex items-center justify-between px-2 mb-4">
+                                <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <div className="bg-slate-200 p-1.5 rounded-lg"><Check className="w-4 h-4 text-slate-600" /></div>
+                                    先払い登録
                                 </h2>
                                 <button
                                     onClick={addPrepayment}
-                                    className="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-100 px-2.5 py-1 rounded-full active:scale-95 transition-transform"
+                                    className="h-10 px-4 text-sm font-bold text-white bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 flex items-center gap-2 active:scale-95 transition-all"
                                 >
-                                    + 追加
-                                </button>
-                            </div>
-
-                            <div className="space-y-2 mb-4">
-                                {prepayments.map((p) => (
-                                    <div key={p.id} className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
-                                        <input
-                                            type="text"
-                                            placeholder="名前"
-                                            className="flex-1 bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-sm text-slate-600 shadow-sm focus:ring-2 focus:ring-indigo-100 outline-none"
-                                            value={p.name}
-                                            onChange={(e) => updatePrepayment(p.id, 'name', e.target.value)}
-                                        />
-                                        <div className="relative w-28">
-                                            <input
-                                                type="number"
-                                                inputMode="numeric"
-                                                placeholder="0"
-                                                className="w-full bg-white border border-slate-200 rounded-lg py-1.5 pl-3 pr-6 text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-100 outline-none"
-                                                value={p.amount || ''}
-                                                onChange={(e) => updatePrepayment(p.id, 'amount', Number(e.target.value))}
-                                            />
-                                            <span className="absolute right-2 top-1.5 text-[10px] text-slate-400">円</span>
-                                        </div>
-                                        <button onClick={() => removePrepayment(p.id)} className="p-1.5 text-slate-300 hover:text-red-400 transition-colors">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                                {prepayments.length === 0 && (
-                                    <p className="text-center text-[10px] text-slate-400 py-2 border border-dashed border-slate-200 rounded-lg">先払いの登録はありません</p>
-                                )}
-                            </div>
-
-                            {prepayments.length > 0 && (
-                                <div className="bg-white/60 p-3 rounded-xl space-y-1 mt-4">
-                                    <div className="flex justify-between text-[11px] text-slate-500">
-                                        <span>先払い合計</span>
-                                        <span className="font-bold">{sumPrepaid.toLocaleString()}円</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-indigo-600 font-bold pt-1 border-t border-slate-200/50">
-                                        <span>残りの割り勘額</span>
-                                        <span>{remainingToSplit.toLocaleString()}円</span>
-                                    </div>
-                                </div>
-                            )}
-                        </section>
-
-                        {/* メンバーリスト */}
-                        <section className="space-y-3">
-                            <div className="flex items-center justify-between px-1">
-                                <h2 className="text-lg font-semibold flex items-center gap-2">
-                                    <Users />
-                                    メンバー設定
-                                </h2>
-                                <button
-                                    onClick={addMember}
-                                    className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition-transform"
-                                >
-                                    <Plus /> 追加
+                                    <Plus className="w-4 h-4" /> 追加
                                 </button>
                             </div>
 
                             <div className="space-y-3">
-                                {displayResults.filter(r => !r.id.toString().startsWith('ext-')).map((res) => (
-                                    <div key={res.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                        <div className="flex items-center gap-2">
-                                            {/* 名前入力 */}
+                                {prepayments.map((p) => (
+                                    <div key={p.id} className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100 flex items-center gap-3 animate-slide-up">
+                                        <input
+                                            type="text"
+                                            placeholder="名前"
+                                            className="min-w-0 flex-1 bg-slate-50 border-none rounded-2xl h-12 px-4 text-base font-bold text-slate-700 focus:ring-2 focus:ring-indigo-100 outline-none"
+                                            value={p.name}
+                                            onChange={(e) => updatePrepayment(p.id, 'name', e.target.value)}
+                                        />
+                                        <div className="relative w-32 shrink-0">
                                             <input
-                                                type="text"
-                                                className="flex-1 font-medium border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none text-slate-700 bg-slate-50 transition-all min-w-0"
-                                                value={res.name}
-                                                onChange={(e) => updateMember(res.id, 'name', e.target.value)}
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="0"
+                                                className="w-full bg-slate-50 border-none rounded-2xl h-12 pl-4 pr-8 text-base font-bold text-slate-900 focus:ring-2 focus:ring-indigo-100 outline-none"
+                                                value={p.amount || ''}
+                                                onChange={(e) => updatePrepayment(p.id, 'amount', Number(e.target.value))}
                                             />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">円</span>
+                                        </div>
+                                        <button onClick={() => removePrepayment(p.id)} className="w-12 h-12 flex items-center justify-center text-slate-200 hover:text-red-400 transition-colors">
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {prepayments.length === 0 && (
+                                    <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl text-xs font-bold text-slate-300 uppercase tracking-widest">
+                                        No Prepayments
+                                    </div>
+                                )}
+                            </div>
+                        </section>
 
-                                            {/* 負担割合 */}
-                                            <div className="relative shrink-0">
-                                                <select
-                                                    className="text-[10px] bg-slate-100 border-none rounded-lg py-1.5 pl-2 pr-6 text-slate-600 focus:ring-2 focus:ring-indigo-200 appearance-none outline-none"
-                                                    value={res.weight}
-                                                    onChange={(e) => updateMember(res.id, 'weight', e.target.value)}
+                        {/* 4. メンバー設定 */}
+                        <section>
+                            <div className="flex items-center justify-between px-2 mb-4 mt-8">
+                                <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <div className="bg-slate-200 p-1.5 rounded-lg"><Users className="w-4 h-4 text-slate-600" /></div>
+                                    メンバー設定
+                                </h2>
+                                <button
+                                    onClick={addMember}
+                                    className="h-10 px-4 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-2xl flex items-center gap-2 active:scale-95 transition-all"
+                                >
+                                    <Plus className="w-4 h-4" /> 追加
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {displayResults.filter(r => !r.id.toString().startsWith('ext-')).map((res) => (
+                                    <div key={res.id} className="bg-white rounded-[2rem] p-6 shadow-premium border border-slate-50 relative animate-slide-up">
+                                        <div className="flex flex-col gap-5">
+                                            {/* 名前・金額行 */}
+                                            <div className="flex items-center justify-between gap-4">
+                                                <input
+                                                    type="text"
+                                                    className="min-w-0 flex-1 h-14 bg-slate-50 border-none rounded-2xl px-5 text-lg font-bold text-slate-800 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                                                    value={res.name}
+                                                    onChange={(e) => updateMember(res.id, 'name', e.target.value)}
+                                                />
+                                                <div className="text-right shrink-0">
+                                                    <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">負担額</div>
+                                                    <div className="text-2xl font-bold bg-indigo-600 bg-clip-text text-transparent">
+                                                        {res.share.toLocaleString()}<span className="text-xs ml-1 text-slate-300">円</span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeMember(res.id)}
+                                                    disabled={members.length <= 1}
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-200 hover:text-red-400 disabled:opacity-0 transition-colors shrink-0"
                                                 >
-                                                    {Object.entries(WEIGHTS).map(([key, info]) => (
-                                                        <option key={key} value={key}>{info.label}</option>
-                                                    ))}
-                                                </select>
-                                                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none scale-75">
-                                                    <ChevronDown />
-                                                </div>
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
                                             </div>
 
-                                            {/* 金額 */}
-                                            <div className="text-right shrink-0 min-w-[70px]">
-                                                <div className="text-base font-bold text-slate-800">
-                                                    {res.share > 0 ? `${res.share.toLocaleString()}円` : '0円'}
-                                                </div>
+                                            {/* 負担割合セグメント */}
+                                            <div className="bg-slate-50 p-1.5 rounded-2xl flex gap-1.5 overflow-x-auto no-scrollbar">
+                                                {Object.entries(WEIGHTS).map(([key, info]) => (
+                                                    <button
+                                                        key={key}
+                                                        onClick={() => updateMember(res.id, 'weight', key)}
+                                                        className={`shrink-0 flex-1 px-3 py-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${res.weight === key ? 'bg-white text-indigo-600 shadow-md scale-[1.05] z-10' : 'text-slate-400 hover:text-slate-600'}`}
+                                                    >
+                                                        {info.label}
+                                                    </button>
+                                                ))}
                                             </div>
-
-                                            {/* 削除 */}
-                                            <button
-                                                onClick={() => removeMember(res.id)}
-                                                disabled={members.length <= 1}
-                                                className="p-1 text-slate-300 hover:text-red-400 transition-colors disabled:opacity-0 shrink-0"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </section>
 
-                        {/* 精算アクション (もらう/払う) */}
+                        {/* 5. 最終精算 */}
                         {displayResults.some(r => r.settlement !== 0) && (
-                            <section className="bg-indigo-600 rounded-2xl p-6 text-white shadow-xl shadow-indigo-200">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-bold flex items-center gap-2">
-                                        <RefreshCw className="w-5 h-5" /> 最終的な精算
+                            <section className="bg-slate-900 rounded-[3rem] p-8 text-white shadow-2xl shadow-indigo-100 relative overflow-hidden mb-12">
+                                <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full -mb-24 -mr-24 blur-2xl"></div>
+                                <div className="flex items-center justify-between mb-8">
+                                    <h2 className="text-xl font-bold flex items-center gap-3">
+                                        <div className="bg-white/10 p-2 rounded-xl"><RefreshCw className="w-6 h-6 text-indigo-300" /></div>
+                                        最終的な精算
                                     </h2>
                                     {surplusAmount > 0 && (
-                                        <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold animate-pulse">
-                                            お釣り: {surplusAmount.toLocaleString()}円
+                                        <div className="bg-indigo-500/30 border border-indigo-400/30 px-4 py-2 rounded-2xl flex flex-col items-center">
+                                            <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest">お釣り</span>
+                                            <span className="text-lg font-bold">{surplusAmount.toLocaleString()}円</span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     {displayResults.filter(r => r.settlement !== 0).map((res) => (
-                                        <div key={res.id} className="flex items-center justify-between border-b border-indigo-400 pb-3 last:border-0 last:pb-0">
-                                            <div>
-                                                <span className="text-sm font-bold">{res.name}</span>
-                                                {res.id.toString().startsWith('ext-') && <span className="text-[10px] ml-1 bg-white/20 px-1 rounded">先払いのみ</span>}
+                                        <div key={res.id} className="flex items-center justify-between group">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-base font-bold text-slate-100">{res.name}</span>
+                                                    {res.id.toString().startsWith('ext-') && (
+                                                        <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter text-indigo-300">Prepaid Only</span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Settlement Action</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-xl font-mono font-bold">
-                                                    {res.settlement > 0 ? `${res.settlement.toLocaleString()}円 払う` :
-                                                        `${Math.abs(res.settlement).toLocaleString()}円 もらう`}
+                                                <div className={`text-2xl font-bold ${res.settlement > 0 ? 'text-indigo-300' : 'text-emerald-400'}`}>
+                                                    {Math.abs(res.settlement).toLocaleString()}
+                                                    <span className="text-xs ml-1 opacity-60">円</span>
+                                                </div>
+                                                <div className={`text-xs font-bold uppercase tracking-widest ${res.settlement > 0 ? 'text-indigo-400' : 'text-emerald-600'}`}>
+                                                    {res.settlement > 0 ? '払う' : 'もらう'}
                                                 </div>
                                             </div>
                                         </div>
@@ -458,8 +516,27 @@
                         )}
                     </main>
 
-                    <footer className="mt-12 text-center text-slate-400 text-[10px]">
-                        &copy; 2026 Smart Warikan Tool
+                    {/* Fixed Summary Bottom bar */}
+                    {totalAmount > 0 && (
+                        <div className="fixed bottom-6 left-4 right-4 z-50 animate-slide-up">
+                            <div className="glass-card shadow-2xl rounded-3xl p-5 flex items-center justify-between max-w-lg mx-auto">
+                                <div className="space-y-0.5">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Summary</div>
+                                    <div className="text-xl font-bold text-indigo-600">{totalAmount.toLocaleString()}円</div>
+                                </div>
+                                <button
+                                    onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                                    className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2"
+                                >
+                                    結果を見る <ChevronDown className="w-4 h-4 opacity-50 rotate-[270deg]" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <footer className="pb-32 pt-12 text-center text-slate-300 text-[10px] items-center flex flex-col gap-2">
+                        <div className="w-8 h-1 bg-slate-100 rounded-full"></div>
+                        <span>&copy; 2026 Smart Warikan Tool • Designed for Mobile</span>
                     </footer>
                 </div>
             );
