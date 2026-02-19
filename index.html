@@ -298,51 +298,53 @@
             };
 
             return (
-                <div className="min-h-screen bg-[#FDFDFF] pb-32 font-sans text-slate-900 overflow-x-hidden">
+                <div className="min-h-screen bg-[#F8F9FC] pb-32 font-sans text-slate-900 overflow-x-hidden">
                     {/* Header */}
-                    <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 py-4 px-6 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-indigo-600 p-2 rounded-xl shadow-indigo-200 shadow-lg">
+                    <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-200 py-4 px-6 flex items-center justify-between shadow-sm ring-1 ring-slate-100">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-2.5 rounded-2xl shadow-indigo-200 shadow-xl ring-2 ring-white/20">
                                 <Wallet className="text-white w-5 h-5" />
                             </div>
-                            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">
+                            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-indigo-900 bg-clip-text text-transparent">
                                 スマート割り勘
                             </h1>
                         </div>
-                        <div className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Mobile First</div>
+                        <div className="px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
+                            <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Mobile Specialized</div>
+                        </div>
                     </header>
 
                     <main className="max-w-xl mx-auto space-y-8 p-4 md:p-6 animate-slide-up">
                         {/* 1. 合計金額セクション */}
-                        <section className="bg-white rounded-3xl p-6 shadow-premium border border-slate-100 relative overflow-hidden">
+                        <section className="bg-white rounded-3xl p-6 shadow-premium border border-slate-200 relative overflow-hidden ring-1 ring-slate-100">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 -z-10 opacity-50"></div>
-                            <label className="block text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">Total Amount</label>
+                            <label className="block text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Total Amount</label>
                             <div className="relative flex items-end">
                                 <input
                                     type="number"
                                     inputMode="numeric"
                                     placeholder="0"
-                                    className="w-full text-5xl font-bold py-2 border-none focus:ring-0 outline-none transition-colors placeholder:text-slate-100 text-indigo-900"
+                                    className="w-full text-5xl font-bold py-2 border-none focus:ring-0 outline-none transition-colors placeholder:text-slate-200 text-indigo-900 bg-transparent"
                                     value={totalAmount || ''}
                                     onChange={(e) => setTotalAmount(Number(e.target.value))}
                                 />
-                                <span className="text-2xl font-bold text-slate-300 ml-2 mb-3">円</span>
+                                <span className="text-2xl font-bold text-slate-400 ml-2 mb-3">円</span>
                             </div>
                         </section>
 
                         {/* 2. スタイル & 先払い概要 */}
                         <div className="grid grid-cols-1 gap-4">
-                            <section className="bg-slate-200/50 p-1.5 rounded-2xl flex gap-1.5 h-14">
+                            <section className="bg-slate-200/50 p-1.5 rounded-2xl flex gap-1.5 h-14 ring-1 ring-slate-200/50">
                                 <button
                                     onClick={() => setSplitStyle('ROUGH')}
-                                    className={`flex-1 flex items-center justify-center text-sm font-bold rounded-xl transition-all ${splitStyle === 'ROUGH' ? 'bg-white text-indigo-600 shadow-sm scale-[1.02]' : 'text-slate-500 hover:text-slate-600'}`}
+                                    className={`flex-1 flex items-center justify-center text-sm font-bold rounded-xl transition-all ${splitStyle === 'ROUGH' ? 'bg-white text-indigo-600 shadow-md scale-[1.02] ring-1 ring-indigo-50' : 'text-slate-500 hover:text-slate-600'}`}
                                 >
                                     ざっくり
                                     <span className="ml-1 opacity-50 text-[10px]">500円</span>
                                 </button>
                                 <button
                                     onClick={() => setSplitStyle('DETAILED')}
-                                    className={`flex-1 flex items-center justify-center text-sm font-bold rounded-xl transition-all ${splitStyle === 'DETAILED' ? 'bg-white text-indigo-600 shadow-sm scale-[1.02]' : 'text-slate-500 hover:text-slate-600'}`}
+                                    className={`flex-1 flex items-center justify-center text-sm font-bold rounded-xl transition-all ${splitStyle === 'DETAILED' ? 'bg-white text-indigo-600 shadow-md scale-[1.02] ring-1 ring-indigo-50' : 'text-slate-500 hover:text-slate-600'}`}
                                 >
                                     詳細
                                     <span className="ml-1 opacity-50 text-[10px]">10円</span>
@@ -350,14 +352,14 @@
                             </section>
 
                             {sumPrepaid > 0 && (
-                                <section className="bg-indigo-50 rounded-3xl p-6 border border-indigo-100/50 flex items-center justify-between">
+                                <section className="bg-indigo-50/50 rounded-3xl p-6 border border-indigo-100 flex items-center justify-between shadow-sm">
                                     <div className="space-y-1">
-                                        <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest"> 対象額</div>
+                                        <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest"> 対象額</div>
                                         <div className="text-2xl font-bold text-indigo-600">{remainingToSplit.toLocaleString()}円</div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">先払い計</div>
-                                        <div className="text-sm font-bold text-slate-500">{sumPrepaid.toLocaleString()}円</div>
+                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">先払い計</div>
+                                        <div className="text-sm font-bold text-slate-600">{sumPrepaid.toLocaleString()}円</div>
                                     </div>
                                 </section>
                             )}
@@ -367,24 +369,24 @@
                         <section>
                             <div className="flex items-center justify-between px-2 mb-4">
                                 <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <div className="bg-slate-200 p-1.5 rounded-lg"><Check className="w-4 h-4 text-slate-600" /></div>
+                                    <div className="bg-slate-200 p-1.5 rounded-lg border border-slate-300"><Check className="w-4 h-4 text-slate-700" /></div>
                                     先払い登録
                                 </h2>
                                 <button
                                     onClick={addPrepayment}
-                                    className="h-10 px-4 text-sm font-bold text-white bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 flex items-center gap-2 active:scale-95 transition-all"
+                                    className="h-10 px-4 text-sm font-bold text-white bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95 transition-all"
                                 >
                                     <Plus className="w-4 h-4" /> 追加
                                 </button>
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {prepayments.map((p) => (
-                                    <div key={p.id} className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100 flex items-center gap-3 animate-slide-up">
+                                    <div key={p.id} className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 flex items-center gap-3 animate-slide-up ring-1 ring-slate-100">
                                         <input
                                             type="text"
                                             placeholder="名前"
-                                            className="min-w-0 flex-1 bg-slate-50 border-none rounded-2xl h-12 px-4 text-base font-bold text-slate-700 focus:ring-2 focus:ring-indigo-100 outline-none"
+                                            className="min-w-0 flex-1 bg-slate-50 border border-slate-200 rounded-2xl h-12 px-4 text-base font-bold text-slate-700 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 outline-none transition-all"
                                             value={p.name}
                                             onChange={(e) => updatePrepayment(p.id, 'name', e.target.value)}
                                         />
@@ -393,19 +395,19 @@
                                                 type="number"
                                                 inputMode="numeric"
                                                 placeholder="0"
-                                                className="w-full bg-slate-50 border-none rounded-2xl h-12 pl-4 pr-8 text-base font-bold text-slate-900 focus:ring-2 focus:ring-indigo-100 outline-none"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl h-12 pl-4 pr-8 text-base font-bold text-slate-900 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 outline-none transition-all"
                                                 value={p.amount || ''}
                                                 onChange={(e) => updatePrepayment(p.id, 'amount', Number(e.target.value))}
                                             />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">円</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">円</span>
                                         </div>
-                                        <button onClick={() => removePrepayment(p.id)} className="w-12 h-12 flex items-center justify-center text-slate-200 hover:text-red-400 transition-colors">
+                                        <button onClick={() => removePrepayment(p.id)} className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
                                             <Trash2 className="w-5 h-5" />
                                         </button>
                                     </div>
                                 ))}
                                 {prepayments.length === 0 && (
-                                    <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl text-xs font-bold text-slate-300 uppercase tracking-widest">
+                                    <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl text-sm font-bold text-slate-300 uppercase tracking-widest bg-slate-50/30">
                                         No Prepayments
                                     </div>
                                 )}
@@ -416,51 +418,51 @@
                         <section>
                             <div className="flex items-center justify-between px-2 mb-4 mt-8">
                                 <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <div className="bg-slate-200 p-1.5 rounded-lg"><Users className="w-4 h-4 text-slate-600" /></div>
+                                    <div className="bg-slate-200 p-1.5 rounded-lg border border-slate-300"><Users className="w-4 h-4 text-slate-700" /></div>
                                     メンバー設定
                                 </h2>
                                 <button
                                     onClick={addMember}
-                                    className="h-10 px-4 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-2xl flex items-center gap-2 active:scale-95 transition-all"
+                                    className="h-10 px-4 text-sm font-bold text-indigo-700 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center gap-2 active:scale-95 transition-all shadow-sm"
                                 >
                                     <Plus className="w-4 h-4" /> 追加
                                 </button>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 {displayResults.filter(r => !r.id.toString().startsWith('ext-')).map((res) => (
-                                    <div key={res.id} className="bg-white rounded-[2rem] p-6 shadow-premium border border-slate-50 relative animate-slide-up">
-                                        <div className="flex flex-col gap-5">
+                                    <div key={res.id} className="bg-white rounded-[2rem] p-6 shadow-premium border border-slate-200 relative animate-slide-up ring-1 ring-slate-100">
+                                        <div className="flex flex-col gap-6">
                                             {/* 名前・金額行 */}
                                             <div className="flex items-center justify-between gap-4">
                                                 <input
                                                     type="text"
-                                                    className="min-w-0 flex-1 h-14 bg-slate-50 border-none rounded-2xl px-5 text-lg font-bold text-slate-800 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                                                    className="min-w-0 flex-1 h-14 bg-slate-50 border border-slate-200 rounded-2xl px-5 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 outline-none transition-all"
                                                     value={res.name}
                                                     onChange={(e) => updateMember(res.id, 'name', e.target.value)}
                                                 />
                                                 <div className="text-right shrink-0">
-                                                    <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">負担額</div>
-                                                    <div className="text-2xl font-bold bg-indigo-600 bg-clip-text text-transparent">
-                                                        {res.share.toLocaleString()}<span className="text-xs ml-1 text-slate-300">円</span>
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">負担額</div>
+                                                    <div className="text-2xl font-bold bg-gradient-to-br from-indigo-600 to-indigo-800 bg-clip-text text-transparent">
+                                                        {res.share.toLocaleString()}<span className="text-xs ml-1 text-slate-400">円</span>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => removeMember(res.id)}
                                                     disabled={members.length <= 1}
-                                                    className="w-10 h-10 flex items-center justify-center text-slate-200 hover:text-red-400 disabled:opacity-0 transition-colors shrink-0"
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 disabled:opacity-0 transition-colors shrink-0"
                                                 >
                                                     <Trash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
 
                                             {/* 負担割合セグメント */}
-                                            <div className="bg-slate-50 p-1.5 rounded-2xl flex gap-1.5 overflow-x-auto no-scrollbar">
+                                            <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1.5 overflow-x-auto no-scrollbar ring-1 ring-slate-200">
                                                 {Object.entries(WEIGHTS).map(([key, info]) => (
                                                     <button
                                                         key={key}
                                                         onClick={() => updateMember(res.id, 'weight', key)}
-                                                        className={`shrink-0 flex-1 px-3 py-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${res.weight === key ? 'bg-white text-indigo-600 shadow-md scale-[1.05] z-10' : 'text-slate-400 hover:text-slate-600'}`}
+                                                        className={`shrink-0 flex-1 px-3 py-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${res.weight === key ? 'bg-white text-indigo-700 shadow-lg scale-[1.05] z-10 ring-1 ring-indigo-50' : 'text-slate-500 hover:text-slate-600'}`}
                                                     >
                                                         {info.label}
                                                     </button>
@@ -474,28 +476,29 @@
 
                         {/* 5. 最終精算 */}
                         {displayResults.some(r => r.settlement !== 0) && (
-                            <section className="bg-slate-900 rounded-[3rem] p-8 text-white shadow-2xl shadow-indigo-100 relative overflow-hidden mb-12">
-                                <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full -mb-24 -mr-24 blur-2xl"></div>
-                                <div className="flex items-center justify-between mb-8">
+                            <section className="bg-slate-900 rounded-[3rem] p-8 text-white shadow-2xl shadow-indigo-200 relative overflow-hidden mb-12 ring-2 ring-white/10">
+                                <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-500/20 rounded-full -mb-24 -mr-24 blur-3xl"></div>
+                                <div className="absolute top-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full -mt-16 -ml-16 blur-3xl"></div>
+                                <div className="flex items-center justify-between mb-8 relative z-10">
                                     <h2 className="text-xl font-bold flex items-center gap-3">
-                                        <div className="bg-white/10 p-2 rounded-xl"><RefreshCw className="w-6 h-6 text-indigo-300" /></div>
+                                        <div className="bg-white/10 p-2 rounded-xl backdrop-blur-sm border border-white/10"><RefreshCw className="w-6 h-6 text-indigo-300" /></div>
                                         最終的な精算
                                     </h2>
                                     {surplusAmount > 0 && (
-                                        <div className="bg-indigo-500/30 border border-indigo-400/30 px-4 py-2 rounded-2xl flex flex-col items-center">
+                                        <div className="bg-indigo-500/30 border border-indigo-400/30 px-4 py-2 rounded-2xl flex flex-col items-center backdrop-blur-sm">
                                             <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest">お釣り</span>
                                             <span className="text-lg font-bold">{surplusAmount.toLocaleString()}円</span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="space-y-6">
+                                <div className="space-y-6 relative z-10">
                                     {displayResults.filter(r => r.settlement !== 0).map((res) => (
-                                        <div key={res.id} className="flex items-center justify-between group">
+                                        <div key={res.id} className="flex items-center justify-between group py-2 border-b border-white/5 last:border-none">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-base font-bold text-slate-100">{res.name}</span>
                                                     {res.id.toString().startsWith('ext-') && (
-                                                        <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter text-indigo-300">Prepaid Only</span>
+                                                        <span className="text-[9px] bg-indigo-500/40 border border-indigo-400/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter text-indigo-100">Prepaid Only</span>
                                                     )}
                                                 </div>
                                                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Settlement Action</div>
@@ -505,7 +508,7 @@
                                                     {Math.abs(res.settlement).toLocaleString()}
                                                     <span className="text-xs ml-1 opacity-60">円</span>
                                                 </div>
-                                                <div className={`text-xs font-bold uppercase tracking-widest ${res.settlement > 0 ? 'text-indigo-400' : 'text-emerald-600'}`}>
+                                                <div className={`text-xs font-bold uppercase tracking-widest ${res.settlement > 0 ? 'text-indigo-400' : 'text-emerald-500'}`}>
                                                     {res.settlement > 0 ? '払う' : 'もらう'}
                                                 </div>
                                             </div>
@@ -534,9 +537,9 @@
                         </div>
                     )}
 
-                    <footer className="pb-32 pt-12 text-center text-slate-300 text-[10px] items-center flex flex-col gap-2">
-                        <div className="w-8 h-1 bg-slate-100 rounded-full"></div>
-                        <span>&copy; 2026 Smart Warikan Tool • Designed for Mobile</span>
+                    <footer className="pb-32 pt-12 text-center text-slate-400 text-[10px] items-center flex flex-col gap-3">
+                        <div className="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+                        <span className="font-bold tracking-widest uppercase">&copy; 2026 Smart Warikan Tool • Premium Mobile Design</span>
                     </footer>
                 </div>
             );
