@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ゴルフ・ドライブ専用！ガソリン代・高速代も計算できる割り勘ツール</title>
+    <meta name="description" content="ゴルフや旅行のレンタカー代、ガソリン代、高速料金をスマートに割り勘。運転手への感謝割引機能付き。LINEへのコピーも1タップで完了！">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "ゴルフ・ドライブ精算",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      }
+    }
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                    },
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide-react@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+            font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+            font-size: 16px;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* 48px Touch Target compliance */
+        input,
+        button,
+        select {
+            min-height: 48px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .shadow-premium {
+            box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.15);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script>
+        // Lucide Icons initialization helper (Robust version)
+        window.getIcon = function (name) {
+            // Priority 1: Check LucideReact (React Components)
+            if (window.LucideReact && window.LucideReact[name]) return window.LucideReact[name];
+
+            // Priority 2: Check Lucide (Core Data) and wrap it
+            if (window.lucide && window.lucide[name]) {
+                const iconData = window.lucide[name];
+
+                // If it's the raw data array [tag, attrs, children]
+                if (Array.isArray(iconData)) {
+                    return function (props) {
+                        const renderNode = (node, key) => {
+                            if (!node || !Array.isArray(node)) return null;
+                            const [tag, attrs, children] = node;
+                            const combinedAttrs = key !== undefined ? { ...attrs, key } : attrs;
+                            return React.createElement(tag, combinedAttrs,
+                                children ? children.map((c, i) => renderNode(c, i)) : null
+                            );
+                        };
+
+                        return React.createElement('svg', {
+                            xmlns: 'http://www.w3.org/2000/svg',
+                            width: '24',
+                            height: '24',
+                            viewBox: '0 0 24 24',
+                            fill: 'none',
+                            stroke: 'currentColor',
+                            strokeWidth: '2',
+                            strokeLinecap: 'round',
+                            strokeLinejoin: 'round',
+                            ...props
+                        }, iconData.map((c, i) => renderNode(c, i)));
+                    };
+                }
+
+                if (typeof iconData === 'function') return iconData;
+            }
+
+            return (props) => React.createElement('span', props, '•');
+        };
+
+        window.Icons = {
+            Car: (props) => React.createElement(window.getIcon('Car'), { className: 'w-6 h-6', ...props }),
+            Fuel: (props) => React.createElement(window.getIcon('Fuel'), { className: 'w-5 h-5 text-emerald-500', ...props }),
+            Milestone: (props) => React.createElement(window.getIcon('Milestone'), { className: 'w-5 h-5 text-emerald-500', ...props }),
+            UsersIcon: (props) => React.createElement(window.getIcon('Users'), { className: 'w-5 h-5 text-emerald-500', ...props }),
+            Gift: (props) => React.createElement(window.getIcon('Gift'), { className: 'w-5 h-5 text-orange-500', ...props }),
+            Share2: (props) => React.createElement(window.getIcon('Share2'), { className: 'w-5 h-5', ...props }),
+            Check: (props) => React.createElement(window.getIcon('Check'), { className: 'w-4 h-4', ...props }),
+            PlusIcon: (props) => React.createElement(window.getIcon('Plus'), { className: 'w-4 h-4 text-emerald-600', ...props }),
+            MinusIcon: (props) => React.createElement(window.getIcon('Minus'), { className: 'w-4 h-4 text-emerald-600', ...props }),
+            InfoIcon: (props) => React.createElement(window.getIcon('Info'), { className: 'w-4 h-4', ...props }),
+            Menu: (props) => React.createElement(window.getIcon('Menu'), { className: 'w-6 h-6', ...props }),
+            X: (props) => React.createElement(window.getIcon('X'), { className: 'w-6 h-6', ...props }),
+            Home: (props) => React.createElement(window.getIcon('Home'), { className: 'w-5 h-5', ...props }),
+            Backpack: (props) => React.createElement(window.getIcon('Backpack'), { className: 'w-5 h-5', ...props }),
+            GlassWater: (props) => React.createElement(window.getIcon('GlassWater'), { className: 'w-5 h-5', ...props }),
+        };
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { Car, Fuel, Milestone, UsersIcon, Gift, Share2, Check, PlusIcon, MinusIcon, InfoIcon, Menu, X, Home, Backpack, GlassWater } = window.Icons;
+
+        const App = () => {
+            const [carFee, setCarFee] = useState(0); // レンタカー・駐車場
+            const [highwayFee, setHighwayFee] = useState(0); // 高速
+            const [fuelFee, setFuelFee] = useState(0); // ガソリン
+            const [memberCount, setMemberCount] = useState(4);
+            const [isDriverDiscount, setIsDriverDiscount] = useState(true);
+            const [discountAmount, setDiscountAmount] = useState(1000);
+            const [roundingUnit, setRoundingUnit] = useState(100);
+            const [calcMode, setCalcMode] = useState('surplus'); // 'surplus' or 'exact'
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            
+            useEffect(() => {
+                const el = document.getElementById('admax-golf');
+                if (el && !el.dataset.loaded) {
+                    const s = document.createElement('script');
+                    s.src = 'https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20';
+                    s.async = true;
+                    el.appendChild(s);
+                    el.dataset.loaded = 'true';
+                }
+            }, []);
+
+            const totalAmount = carFee + highwayFee + fuelFee;
+
+            const results = useMemo(() => {
+                if (memberCount <= 0) return null;
+
+                const basePerPerson = totalAmount / memberCount;
+
+                let driverPay = basePerPerson;
+                let passengerPay = basePerPerson;
+
+                if (isDriverDiscount && memberCount > 1) {
+                    // 運転手は割引額分減らす
+                    driverPay = Math.max(0, basePerPerson - discountAmount);
+                    // 同乗者はその分を頭割りで上乗せ（運転手以外で負担）
+                    const totalDiscount = basePerPerson - driverPay;
+                    passengerPay = basePerPerson + (totalDiscount / (memberCount - 1));
+                }
+
+                // 端数処理
+                let driverFinal, passengerFinal, finalSurplus;
+
+                if (calcMode === 'exact' && memberCount > 0) {
+                    // 全員切り上げで計算した後、運転手で調整して合計を一致させる
+                    const dBase = Math.ceil(driverPay / roundingUnit) * roundingUnit;
+                    const pBase = Math.ceil(passengerPay / roundingUnit) * roundingUnit;
+
+                    const currentTotal = dBase + (pBase * (memberCount - 1));
+                    const diff = currentTotal - totalAmount;
+
+                    driverFinal = dBase - diff;
+                    passengerFinal = pBase;
+                    finalSurplus = 0;
+                } else {
+                    driverFinal = Math.ceil(driverPay / roundingUnit) * roundingUnit;
+                    passengerFinal = Math.ceil(passengerPay / roundingUnit) * roundingUnit;
+                    finalSurplus = (driverFinal + (passengerFinal * (memberCount - 1))) - totalAmount;
+                }
+
+                return {
+                    driver: driverFinal,
+                    passenger: passengerFinal,
+                    total: driverFinal + (passengerFinal * (memberCount - 1)),
+                    surplus: finalSurplus
+                };
+            }, [carFee, highwayFee, fuelFee, memberCount, isDriverDiscount, discountAmount, roundingUnit, calcMode]);
+
+            const copyToLine = () => {
+                if (!results) return;
+                const text = [
+                    "【本日のゴルフ精算】",
+                    `合計: ${totalAmount.toLocaleString()}円`,
+                    `------------------`,
+                    `運転手: ${results.driver.toLocaleString()}円`,
+                    `同乗者: ${results.passenger.toLocaleString()}円 (x${memberCount - 1}名)`,
+                    results.surplus > 0 ? `お釣り(余り): ${results.surplus.toLocaleString()}円` : "",
+                    `------------------`,
+                    `詳細はWebで：`,
+                    window.location.href
+                ].filter(Boolean).join('\n');
+
+                if (navigator.share) {
+                    navigator.share({ text }).catch(() => { });
+                } else {
+                    navigator.clipboard.writeText(text);
+                    alert('クリップボードにコピーしました！そのままLINEに貼り付けられます。');
+                }
+            };
+
+            const NavMenu = () => (
+                <div className={`fixed inset-0 z-[100] transition-all duration-500 ${isMenuOpen ? 'visible' : 'invisible'}`}>
+                    <div
+                        className={`absolute inset-0 bg-emerald-900/60 backdrop-blur-sm transition-opacity duration-500 ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`}
+                        onClick={() => setIsMenuOpen(false)}
+                    ></div>
+                    <div className={`absolute right-0 top-0 bottom-0 w-[280px] bg-white shadow-2xl transition-transform duration-500 transform ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+                        <div className="p-6 border-b border-emerald-50 flex items-center justify-between">
+                            <span className="text-lg font-bold text-emerald-900 font-sans">メニュー</span>
+                            <button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 flex items-center justify-center text-emerald-400 hover:text-emerald-600">
+                                <X />
+                            </button>
+                        </div>
+                        <nav className="flex-1 p-4 space-y-2 overflow-y-auto font-sans">
+                            <a href="index.html" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-emerald-50 text-emerald-900 font-bold transition-colors">
+                                <Home />
+                                <span>ホーム（基本）</span>
+                            </a>
+                            <a href="golf.html" className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 text-emerald-700 font-bold">
+                                <Car />
+                                <span>ゴルフ・ドライブ精算</span>
+                            </a>
+                            <a href="travel.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-emerald-50 text-emerald-900 font-bold transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <Backpack className="text-orange-500" />
+                                    <span>旅行・キャンプ精算</span>
+                                </div>
+                                <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
+                            </a>
+                            <div className="flex items-center justify-between p-4 rounded-2xl text-emerald-900/30 font-bold cursor-not-allowed">
+                                <div className="flex items-center gap-4">
+                                    <GlassWater />
+                                    <span>合コン・飲み会精算</span>
+                                </div>
+                                <span className="text-[10px] border border-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-widest opacity-40">Soon</span>
+                            </div>
+                        </nav>
+                        <div className="p-8 border-t border-emerald-50 text-center font-sans">
+                            <p className="text-[10px] text-emerald-200 font-bold uppercase tracking-widest">
+                                Smart Warikan v2.1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen pb-20 text-slate-900 bg-[#F0F7F4] font-sans">
+                    {/* Header */}
+                    <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-emerald-100 py-4 px-6 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 p-2 rounded-xl shadow-lg shadow-emerald-100">
+                                <Car className="text-white w-5 h-5" />
+                            </div>
+                            <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-700 to-emerald-900 bg-clip-text text-transparent font-sans">
+                                ゴルフ・ドライブ精算
+                            </h1>
+                        </div>
+                        <button
+                            onClick={() => setIsMenuOpen(true)}
+                            className="w-12 h-12 flex items-center justify-center text-emerald-600 bg-emerald-50 rounded-2xl border border-emerald-100 active:scale-95 transition-all shadow-sm"
+                        >
+                            <Menu />
+                        </button>
+                    </header>
+                    <NavMenu />
+
+                    <main className="max-w-xl mx-auto p-4 space-y-6">
+                        {/* Breadcrumbs */}
+                        <nav className="flex items-center gap-2 px-2 text-[10px] font-bold tracking-widest uppercase">
+                            <a href="index.html" className="text-emerald-600 hover:underline">ホーム</a>
+                            <span className="text-slate-300">/</span>
+                            <span className="text-slate-400">ゴルフ・ドライブ精算</span>
+                        </nav>
+
+                        {/* Title SEO */}
+                        <div className="pt-4 pb-2 px-2">
+                            <h2 className="text-[28px] font-black text-emerald-900 leading-[1.2] tracking-tight">
+                                ゴルフ・ドライブ専用！<br />ガソリン代・高速代も<br />スマートに計算。
+                            </h2>
+                            <p className="text-sm text-slate-500 mt-3 font-medium">
+                                レンタカーやガソリン代の精算を、運転手への「感謝割引」込みで1タップ割り勘。
+                            </p>
+                        </div>
+
+                        {/* 費用入力セクション */}
+                        <section className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-emerald-100 space-y-8 ring-1 ring-emerald-500/5">
+                            {/* 合計表示 (ライブアップデート) */}
+                            <div className="text-center pb-6 border-b border-slate-100">
+                                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1 block">Total Estimated Cost</span>
+                                <div className="text-5xl font-black text-emerald-900 tracking-tighter">{totalAmount.toLocaleString()}<span className="text-lg ml-1 text-slate-400 font-bold">円</span></div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* レンタカー・駐車場 */}
+                                <div className="space-y-3">
+                                    <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                                        <Car className="w-4 h-4 text-emerald-500" />
+                                        共通費用（レンタカー・駐車場など）
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            placeholder="0"
+                                            className="w-full bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 rounded-3xl h-14 pl-6 pr-12 text-xl font-bold outline-none transition-all"
+                                            value={carFee || ''}
+                                            onChange={(e) => setCarFee(Number(e.target.value))}
+                                        />
+                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">円</span>
+                                    </div>
+                                </div>
+
+                                {/* 高速・ガソリン */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                                            <Milestone className="w-4 h-4" /> 高速道路代
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="0"
+                                                className="w-full bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 rounded-3xl h-14 pl-6 pr-12 text-lg font-bold outline-none transition-all"
+                                                value={highwayFee || ''}
+                                                onChange={(e) => setHighwayFee(Number(e.target.value))}
+                                            />
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">円</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                                            <Fuel className="w-4 h-4" /> ガソリン代
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="0"
+                                                className="w-full bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 rounded-3xl h-14 pl-6 pr-12 text-lg font-bold outline-none transition-all"
+                                                value={fuelFee || ''}
+                                                onChange={(e) => setFuelFee(Number(e.target.value))}
+                                            />
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">円</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 設定セクション */}
+                        <section className="space-y-4 pt-4">
+                            {/* 参加人数 */}
+                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center justify-between ring-1 ring-slate-200/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-emerald-50 p-2.5 rounded-2xl text-emerald-600">
+                                        <UsersIcon className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <span className="block text-sm font-bold text-slate-800">参加人数</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Participants</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 bg-slate-50 p-1.5 rounded-[1.25rem] border border-slate-200/50">
+                                    <button
+                                        onClick={() => setMemberCount(Math.max(1, memberCount - 1))}
+                                        className="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-sm text-emerald-600 active:scale-90 transition-all border border-slate-100"
+                                    >
+                                        <MinusIcon />
+                                    </button>
+                                    <span className="text-2xl font-black text-emerald-900 w-8 text-center">{memberCount}</span>
+                                    <button
+                                        onClick={() => setMemberCount(memberCount + 1)}
+                                        className="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-sm text-emerald-600 active:scale-90 transition-all border border-slate-100"
+                                    >
+                                        <PlusIcon />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 運転手割引 */}
+                            <div className={`rounded-[2.5rem] p-6 sm:p-8 border transition-all duration-300 ${isDriverDiscount ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-200 border-emerald-500 scale-[1.02]' : 'bg-white text-slate-400 border-slate-100'}`}>
+                                <div className="flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4 flex-1 min-w-[200px]" onClick={() => setIsDriverDiscount(!isDriverDiscount)}>
+                                        <div className={`p-3 rounded-2xl border transition-colors ${isDriverDiscount ? 'bg-white/20 border-white/20 text-white' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                                            <Gift className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <span className={`block text-base font-bold ${isDriverDiscount ? 'text-white' : 'text-slate-800'}`}>運転手感謝割引</span>
+                                            <span className={`text-[10px] font-bold uppercase tracking-tighter ${isDriverDiscount ? 'text-emerald-100' : 'text-slate-400'}`}>Driver's Appreciation</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsDriverDiscount(!isDriverDiscount)}
+                                        className={`w-16 h-9 rounded-full relative transition-colors duration-300 ${isDriverDiscount ? 'bg-white text-emerald-600 shadow-inner' : 'bg-slate-200'}`}
+                                    >
+                                        <div className={`absolute top-1.5 w-6 h-6 rounded-full shadow-md transition-all duration-300 ${isDriverDiscount ? 'left-8 bg-emerald-500' : 'left-2 bg-white'}`}></div>
+                                    </button>
+                                </div>
+                                {isDriverDiscount && (
+                                    <div className="mt-6 pt-6 border-t border-white/20 animate-slide-up">
+                                        <div className="flex flex-wrap items-center justify-between gap-4">
+                                            <span className="text-xs font-bold text-emerald-50 tracking-widest uppercase">割引・減額する額：</span>
+                                            <div className="relative w-full sm:w-36 shrink-0">
+                                                <input
+                                                    type="number"
+                                                    inputMode="numeric"
+                                                    className="w-full bg-white border border-white/30 rounded-2xl h-12 px-5 text-lg font-bold text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-300 transition-all font-mono"
+                                                    value={discountAmount || ''}
+                                                    onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                                                />
+                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">円</span>
+                                            </div>
+                                        </div>
+                                        <p className="text-[11px] mt-4 leading-relaxed opacity-90 font-medium">
+                                            運転手への感謝として負担を減らします。減少分は同乗者の負担に均等に追加されます。
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 計算モード切替 */}
+                            <div className="bg-slate-200/50 p-1 rounded-2xl flex gap-1 h-14 ring-1 ring-slate-200/50">
+                                <button
+                                    onClick={() => setCalcMode('surplus')}
+                                    className={`flex-1 flex flex-col items-center justify-center rounded-xl transition-all ${calcMode === 'surplus' ? 'bg-white text-emerald-600 shadow-md ring-1 ring-emerald-50' : 'text-slate-400'}`}
+                                >
+                                    <span className="text-[10px] font-bold">不足を出さない</span>
+                                    <span className="text-[9px] opacity-60">（切り上げ精算）</span>
+                                </button>
+                                <button
+                                    onClick={() => setCalcMode('exact')}
+                                    className={`flex-1 flex flex-col items-center justify-center rounded-xl transition-all ${calcMode === 'exact' ? 'bg-white text-emerald-600 shadow-md ring-1 ring-emerald-50' : 'text-slate-400'}`}
+                                >
+                                    <span className="text-[10px] font-bold">全体をピッタリ</span>
+                                    <span className="text-[9px] opacity-60">（合計額を一致）</span>
+                                </button>
+                            </div>
+
+                            {/* 端数単位 */}
+                            <div className="bg-slate-200/50 p-1.5 rounded-2xl flex gap-1.5 h-14 ring-1 ring-slate-200/50 overflow-x-auto no-scrollbar">
+                                {[10, 100, 500, 1000].map(unit => (
+                                    <button
+                                        key={unit}
+                                        onClick={() => setRoundingUnit(unit)}
+                                        className={`shrink-0 flex-1 min-w-[70px] flex items-center justify-center text-xs font-bold rounded-xl transition-all ${roundingUnit === unit ? 'bg-white text-emerald-600 shadow-md scale-[1.02] ring-1 ring-emerald-50' : 'text-slate-500 hover:text-slate-600'}`}
+                                    >
+                                        {unit}円単位
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* 精算結果セクション */}
+                        <section className="pt-4 pb-12">
+                            <div className="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl shadow-emerald-200 relative overflow-hidden ring-2 ring-white/10">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full -mt-32 -mr-32 blur-[100px]"></div>
+                                <div className="flex items-center justify-between mb-10 relative z-10">
+                                    <h3 className="text-2xl font-black flex items-center gap-3">
+                                        精算結果
+                                    </h3>
+                                    {results && results.surplus !== 0 && (
+                                        <div className="bg-emerald-500/30 border border-emerald-400/40 px-5 py-2.5 rounded-2xl flex flex-col items-center backdrop-blur-md">
+                                            <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-widest leading-none mb-1">{calcMode === 'exact' ? '誤差' : 'お釣り(余り)'}</span>
+                                            <span className="text-xl font-black">{results.surplus.toLocaleString()}円</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {results ? (
+                                    <div className="space-y-8 relative z-10">
+                                        <div className="flex items-center justify-between py-6 border-b border-white/10 group">
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-base font-bold text-emerald-400">運転手</span>
+                                                    {isDriverDiscount && <span className="text-[9px] bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-500/30">割引適用済み</span>}
+                                                </div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Driver's Final Cost</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-4xl font-black text-white tracking-tighter">
+                                                    {results.driver.toLocaleString()}<span className="text-xs ml-1 opacity-60 font-medium tracking-normal">円</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between py-6">
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-base font-bold text-white">同乗者（1人あたり）</span>
+                                                </div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Passenger's Final Cost</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-4xl font-black text-white tracking-tighter">
+                                                    {results.passenger.toLocaleString()}<span className="text-xs ml-1 opacity-60 font-medium tracking-normal">円</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={copyToLine}
+                                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-6 rounded-[2rem] flex items-center justify-center gap-3 font-bold transition-all active:scale-95 shadow-xl shadow-emerald-900/40 mt-10 text-lg ring-2 ring-emerald-400/20"
+                                        >
+                                            <Share2 className="w-6 h-6" />
+                                            結果をLINEにコピー
+                                        </button>
+                                <div className="mt-8 mb-4 flex flex-col items-center min-h-[60px]">
+                                    <div className="text-xs text-gray-400 mb-2">スポンサーリンク</div>
+                                    <div id="admax-golf" className="w-full flex justify-center"></div>
+                                </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-16 text-slate-600 text-sm font-bold uppercase tracking-widest border-2 border-dashed border-slate-800 rounded-[2rem]">
+                                        Input Fees to Calculate
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* SEO Contents / Footer */}
+                        <footer className="mt-8 space-y-12 pb-20">
+                            <section className="bg-white rounded-[3rem] p-10 space-y-10 border border-slate-200 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+                                <div className="space-y-5">
+                                    <h4 className="flex items-center gap-3 font-bold text-lg text-emerald-800">
+                                        <div className="p-1.5 bg-emerald-50 rounded-lg"><InfoIcon className="w-5 h-5 text-emerald-600" /></div>
+                                        ガソリン代の正確な計算方法は？
+                                    </h4>
+                                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                        ドライブの割り勘で揉めやすいのがガソリン代です。正確に出したい場合は「走行距離 ÷ 実燃費 × リッター単価」で算出できますが、当日の給油レセプトがある場合はその金額を入力するのが最も公平です。最近は燃費が良い車も多いため、1kmあたり15円〜20円を目安として固定費設定にするケースも増えています。
+                                    </p>
+                                </div>
+                                <div className="space-y-5 border-t border-slate-100 pt-8">
+                                    <h4 className="flex items-center gap-3 font-bold text-lg text-emerald-800">
+                                        <div className="p-1.5 bg-emerald-50 rounded-lg"><InfoIcon className="w-5 h-5 text-emerald-600" /></div>
+                                        ゴルフの交通費精算のマナー
+                                    </h4>
+                                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                        ゴルフは朝早くからの運転や帰りの渋滞など、運転手の負担が大きいスポーツです。そのため、全費用を頭割りするのではなく、運転手以外の同乗者が少しずつ多めに払い、運転手の負担額を1,000円〜2,000円程度減額するのがスマートなマナーとされています。当ツールの「運転手感謝割引」を活用して、気持ちよくプレーを終えましょう。
+                                    </p>
+                                </div>
+                            </section>
+
+                            <div className="text-center space-y-6">
+                                <div className="w-16 h-1 w-16 h-1 bg-emerald-200 mx-auto rounded-full"></div>
+                                <div className="inline-flex items-center gap-4 px-8 py-3 bg-white border border-slate-200 shadow-sm rounded-full text-[11px] font-bold text-slate-400 tracking-[0.2em] uppercase">
+                                    &copy; 2026 Smart Warikan Tool • Premium Golf Edition
+                                </div>
+                            </div>
+                        </footer>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

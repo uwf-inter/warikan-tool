@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旅行・キャンプ専用！複数人の立て替えをまとめて精算する割り勘ツール</title>
+    <meta name="description" content="旅行やキャンプでの複雑な立て替えを1分で解決。誰が何に対していくら払ったかを入力するだけで、最小限の送金回数で精算プランを提示します。LINE共有も対応。">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "旅行・キャンプ精算",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      }
+    }
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        },
+                        earth: {
+                            50: '#f5f5f4',
+                            100: '#e7e5e4',
+                            200: '#d6d3d1',
+                            300: '#a8a29e',
+                            400: '#78716c',
+                            500: '#57534e',
+                            600: '#44403c',
+                            700: '#292524',
+                            800: '#1c1917',
+                            900: '#0c0a09',
+                        }
+                    },
+                    borderRadius: {
+                        '3xl': '1.5rem',
+                        '4xl': '2rem',
+                    },
+                    boxShadow: {
+                        'premium': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+                    },
+                    animation: {
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'bounce-subtle': 'bounceSubtle 2s infinite',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        bounceSubtle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-3px)' },
+                        }
+                    },
+                    screens: {
+                        'xs': '375px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide-react@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+
+<body class="bg-brand-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        // Lucide Icons initialization helper
+        window.getIcon = function (name) {
+            if (window.LucideReact && window.LucideReact[name]) return window.LucideReact[name];
+            return (props) => <span>•</span>;
+        };
+
+        const MapIcon = window.getIcon('Map');
+        const Backpack = window.getIcon('Backpack');
+        const Users = window.getIcon('Users');
+        const Plus = window.getIcon('Plus');
+        const Trash2 = window.getIcon('Trash2');
+        const Wallet = window.getIcon('Wallet');
+        const Check = window.getIcon('Check');
+        const Copy = window.getIcon('Copy');
+        const Menu = window.getIcon('Menu');
+        const X = window.getIcon('X');
+        const Home = window.getIcon('Home');
+        const Car = window.getIcon('Car');
+        const Tent = window.getIcon('Tent');
+        const ChevronRight = window.getIcon('ChevronRight');
+        const Info = window.getIcon('Info');
+        const Share2 = window.getIcon('Share2');
+
+        const NavMenu = ({ isOpen, onClose }) => {
+            return (
+                <div className={`fixed inset-0 z-[100] transition-all duration-500 ${isOpen ? 'visible' : 'invisible'}`}>
+                    <div
+                        className={`absolute inset-0 bg-earth-900/40 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+                        onClick={onClose}
+                    ></div>
+                    <div className={`absolute top-0 right-0 h-full w-[280px] bg-white shadow-2xl transition-transform duration-500 ease-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                        <div className="p-6 border-b border-earth-100 flex items-center justify-between">
+                            <span className="font-black text-earth-800 tracking-tighter text-xl">MENU</span>
+                            <button onClick={onClose} className="p-2 hover:bg-earth-50 rounded-full transition-colors">
+                                <X className="w-6 h-6 text-earth-400" />
+                            </button>
+                        </div>
+                        <nav className="flex-1 p-4 space-y-2">
+                            <a href="index.html" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50 transition-all text-earth-600 font-bold group">
+                                <div className="p-2.5 bg-earth-50 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all">
+                                    <Home className="w-5 h-5" />
+                                </div>
+                                <span>ホーム（基本）</span>
+                            </a>
+                            <a href="golf.html" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50 transition-all text-earth-600 font-bold group">
+                                <div className="p-2.5 bg-earth-50 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all">
+                                    <Car className="w-5 h-5" />
+                                </div>
+                                <span className="flex-1">ゴルフ・ドライブ</span>
+                            </a>
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-brand-50 text-brand-600 font-bold">
+                                <div className="p-2.5 bg-white rounded-xl shadow-sm">
+                                    <Backpack className="w-5 h-5" />
+                                </div>
+                                <span className="flex-1">旅行・キャンプ</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand-500"></div>
+                            </div>
+                        </nav>
+                        <div className="p-8 border-t border-earth-50 text-center">
+                            <p className="text-[10px] text-earth-400 font-bold uppercase tracking-widest">Smart Warikan v2.1</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [members, setMembers] = useState(['幹事', 'メンバーA', 'メンバーB']);
+            const [expenses, setExpenses] = useState([]);
+            const [newMemberName, setNewMemberName] = useState('');
+            const [newExpense, setNewExpense] = useState({ payer: '', item: '', amount: '' });
+            const [roundingUnit, setRoundingUnit] = useState(1);
+            
+            useEffect(() => {
+                const el = document.getElementById('admax-travel');
+                if (el && !el.dataset.loaded) {
+                    const s = document.createElement('script');
+                    s.src = 'https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20';
+                    s.async = true;
+                    el.appendChild(s);
+                    el.dataset.loaded = 'true';
+                }
+            }, []);
+
+            // メンバー追加
+            const addMember = () => {
+                if (newMemberName.trim()) {
+                    setMembers([...members, newMemberName.trim()]);
+                    setNewMemberName('');
+                }
+            };
+
+            // メンバー削除
+            const removeMember = (index) => {
+                const nameToRemove = members[index];
+                setMembers(members.filter((_, i) => i !== index));
+                setExpenses(expenses.filter(e => e.payer !== nameToRemove));
+            };
+
+            // 出費追加
+            const addExpense = () => {
+                if (newExpense.payer && newExpense.amount > 0) {
+                    setExpenses([...expenses, { ...newExpense, id: Date.now() }]);
+                    setNewExpense({ payer: '', item: '', amount: '' });
+                }
+            };
+
+            // 出費削除
+            const removeExpense = (id) => {
+                setExpenses(expenses.filter(e => e.id !== id));
+            };
+
+            // 精算計算ロジック
+            const settlement = useMemo(() => {
+                if (members.length === 0) return { plans: [], shares: {}, totalAmount: 0, average: 0, surplus: 0 };
+
+                const totalPaid = {};
+                members.forEach(m => totalPaid[m] = 0);
+                expenses.forEach(e => {
+                    if (totalPaid[e.payer] !== undefined) {
+                        totalPaid[e.payer] += Number(e.amount);
+                    }
+                });
+
+                const totalAmount = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+                const averageRaw = totalAmount / members.length;
+                const average = Math.ceil(averageRaw / roundingUnit) * roundingUnit;
+
+                // 各人の過不足
+                let balances = members.map(m => ({
+                    name: m,
+                    balance: totalPaid[m] - average
+                }));
+
+                const plans = [];
+                const lenders = balances.filter(b => b.balance > 0).sort((a, b) => b.balance - a.balance);
+                const borrowers = balances.filter(b => b.balance < 0).sort((a, b) => a.balance - b.balance);
+
+                // コピーを作成して処理
+                let currentLenders = lenders.map(l => ({ ...l }));
+                let currentBorrowers = borrowers.map(b => ({ ...b }));
+
+                let lIdx = 0;
+                let bIdx = 0;
+
+                while (lIdx < currentLenders.length && bIdx < currentBorrowers.length) {
+                    const lender = currentLenders[lIdx];
+                    const borrower = currentBorrowers[bIdx];
+                    const amount = Math.min(lender.balance, Math.abs(borrower.balance));
+
+                    if (amount > 0.1) {
+                        plans.push({
+                            from: borrower.name,
+                            to: lender.name,
+                            amount: Math.round(amount)
+                        });
+                    }
+
+                    lender.balance -= amount;
+                    borrower.balance += amount;
+
+                    if (lender.balance < 0.1) lIdx++;
+                    if (borrower.balance > -0.1) bIdx++;
+                }
+
+                return {
+                    plans,
+                    totalAmount,
+                    average,
+                    totalPaid,
+                    surplus: (average * members.length) - totalAmount
+                };
+            }, [members, expenses, roundingUnit]);
+
+            const copyToLine = () => {
+                let text = `【旅行の精算結果】\n`;
+                text += `合計: ${settlement.totalAmount.toLocaleString()}円\n`;
+                text += `1人あたり: ${settlement.average.toLocaleString()}円\n\n`;
+                text += `--- 送金依頼 ---\n`;
+                if (settlement.plans.length === 0) {
+                    text += `精算の必要はありません。`;
+                } else {
+                    settlement.plans.forEach(p => {
+                        text += `${p.from}さん → ${p.to}さんへ: ${p.amount.toLocaleString()}円\n`;
+                    });
+                }
+                text += `\n#旅行精算 #割り勘ツール`;
+
+                if (navigator.share) {
+                    navigator.share({ title: '旅行の精算', text }).catch(() => { });
+                } else {
+                    navigator.clipboard.writeText(text);
+                    alert('クリップボードにコピーしました！');
+                }
+            };
+
+            return (
+                <div className="min-h-screen pb-32">
+                    <NavMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+                    {/* Header */}
+                    <header className="glass sticky top-0 z-50 border-b border-brand-100 py-4 px-6 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-gradient-to-br from-brand-500 to-brand-700 p-2.5 rounded-2xl shadow-brand-200 shadow-xl ring-2 ring-white/20">
+                                <Backpack className="text-white w-5 h-5" />
+                            </div>
+                            <h1 className="text-xl font-bold tracking-tight text-brand-900">
+                                旅行・キャンプ精算
+                            </h1>
+                        </div>
+                        <button
+                            onClick={() => setIsMenuOpen(true)}
+                            className="w-12 h-12 flex items-center justify-center text-earth-600 bg-white rounded-2xl border border-earth-100 active:scale-95 transition-all shadow-sm"
+                        >
+                            <Menu />
+                        </button>
+                    </header>
+
+                    <main className="max-w-xl mx-auto p-4 space-y-6 animate-slide-up">
+                        {/* Breadcrumbs */}
+                        <nav className="flex items-center gap-2 px-2 text-[10px] font-bold tracking-widest uppercase mb-4">
+                            <a href="index.html" className="text-brand-600 hover:underline">ホーム</a>
+                            <span className="text-earth-300">/</span>
+                            <span className="text-earth-400">旅行・キャンプ精算</span>
+                        </nav>
+
+                        {/* Title Section */}
+                        <div className="px-2">
+                            <h2 className="text-3xl font-black text-earth-900 leading-tight">
+                                複雑な立て替えを<br />
+                                <span className="text-brand-600">まとめて精算。</span>
+                            </h2>
+                            <p className="mt-2 text-earth-500 text-sm font-medium">誰が何にいくら払ったかを入力するだけ。</p>
+                        </div>
+
+                        {/* Total Stats */}
+                        <div className="bg-brand-600 rounded-4xl p-8 shadow-xl shadow-brand-200 text-white relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                            <div className="relative z-10 flex justify-between items-end">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-200 mb-1 block">Total Split</span>
+                                    <div className="text-5xl font-black">{settlement.totalAmount.toLocaleString()}<span className="text-lg ml-1">円</span></div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-200 mb-1 block">Per Person</span>
+                                    <div className="text-2xl font-bold">{settlement.average.toLocaleString()}円</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 1. Members Section */}
+                        <section className="bg-white rounded-3xl p-6 shadow-premium border border-earth-100">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="bg-brand-50 p-2.5 rounded-2xl text-brand-600">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-earth-800">メンバー設定</h3>
+                                    <p className="text-[10px] text-earth-400 font-bold uppercase tracking-widest">Travel Members</p>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                {members.map((m, i) => (
+                                    <div key={i} className="bg-earth-50 border border-earth-100 pl-4 pr-2 py-2 rounded-xl flex items-center gap-3 transition-all hover:border-brand-200 group">
+                                        <span className="text-sm font-bold text-earth-800">{m}</span>
+                                        <button onClick={() => removeMember(i)} className="text-earth-300 hover:text-red-500 p-1">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="名前を入力"
+                                    className="flex-1 bg-earth-50 border-none rounded-2xl h-14 px-5 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none transition-all placeholder:text-earth-300"
+                                    value={newMemberName}
+                                    onChange={(e) => setNewMemberName(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && addMember()}
+                                />
+                                <button
+                                    onClick={addMember}
+                                    className="w-14 h-14 bg-earth-900 text-white rounded-2xl flex items-center justify-center active:scale-95 transition-all shadow-md"
+                                >
+                                    <Plus className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </section>
+
+                        {/* 2. Expenses Section */}
+                        <section className="bg-white rounded-3xl p-6 shadow-premium border border-earth-100">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="bg-brand-50 p-2.5 rounded-2xl text-brand-600">
+                                    <Wallet className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-earth-800">立て替えの追加</h3>
+                                    <p className="text-[10px] text-earth-400 font-bold uppercase tracking-widest">Add Expenses</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 mb-8">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-earth-400 uppercase ml-1">誰が</label>
+                                        <select
+                                            className="w-full bg-earth-50 border-none rounded-2xl h-14 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-500 appearance-none"
+                                            value={newExpense.payer}
+                                            onChange={(e) => setNewExpense({ ...newExpense, payer: e.target.value })}
+                                        >
+                                            <option value="">選択してください</option>
+                                            {members.map((m, i) => <option key={i} value={m}>{m}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-earth-400 uppercase ml-1">いくら</label>
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            placeholder="金額"
+                                            className="w-full bg-earth-50 border-none rounded-2xl h-14 px-5 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none placeholder:text-earth-300"
+                                            value={newExpense.amount || ''}
+                                            onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-earth-400 uppercase ml-1">費目（任意）</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="レンタカー、食材など"
+                                            className="flex-1 bg-earth-50 border-none rounded-2xl h-14 px-5 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none transition-all placeholder:text-earth-300"
+                                            value={newExpense.item}
+                                            onChange={(e) => setNewExpense({ ...newExpense, item: e.target.value })}
+                                            onKeyPress={(e) => e.key === 'Enter' && addExpense()}
+                                        />
+                                        <button
+                                            onClick={addExpense}
+                                            disabled={!newExpense.payer || !newExpense.amount}
+                                            className={`h-14 px-6 rounded-2xl font-black text-sm transition-all shadow-md flex items-center gap-2 ${newExpense.payer && newExpense.amount ? 'bg-brand-600 text-white active:scale-95' : 'bg-earth-100 text-earth-300 cursor-not-allowed'}`}
+                                        >
+                                            追加
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {expenses.map((e) => (
+                                    <div key={e.id} className="bg-earth-50 p-4 rounded-2xl border border-earth-100 flex items-center justify-between group animate-slide-up">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-brand-600 shadow-sm">
+                                                <Tent className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-black text-earth-800 leading-none mb-1">
+                                                    {e.payer} <span className="text-[10px] text-earth-400 font-normal">が支払い</span>
+                                                </div>
+                                                <div className="text-xs text-earth-400">{e.item || '旅費・食費'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-right">
+                                                <div className="text-base font-black text-earth-900 tracking-tight">
+                                                    {Number(e.amount).toLocaleString()}円
+                                                </div>
+                                            </div>
+                                            <button onClick={() => removeExpense(e.id)} className="p-2 text-earth-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {expenses.length === 0 && (
+                                    <div className="text-center py-12 border-2 border-dashed border-earth-100 rounded-3xl">
+                                        <div className="text-earth-200 mb-2 flex justify-center uppercase font-black text-xs tracking-widest animate-bounce-subtle">No Data</div>
+                                        <p className="text-earth-300 text-xs font-bold">立て替えを入力してください</p>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* 3. Settlement Results */}
+                        <section className="bg-white rounded-3xl p-6 shadow-premium border border-earth-100 overflow-hidden relative">
+                            <div className="absolute top-0 right-0 p-4 opacity-5">
+                                <Check className="w-24 h-24" />
+                            </div>
+                            <div className="flex items-center gap-3 mb-8 relative z-10">
+                                <div className="bg-brand-50 p-2.5 rounded-2xl text-brand-600">
+                                    <Plus className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-earth-800">精算プラン</h3>
+                                    <p className="text-[10px] text-earth-400 font-bold uppercase tracking-widest">Settlement Plan</p>
+                                </div>
+                                <div className="flex bg-earth-100 p-1 rounded-xl ring-1 ring-earth-200">
+                                    {[1, 10, 100].map(u => (
+                                        <button
+                                            key={u}
+                                            onClick={() => setRoundingUnit(u)}
+                                            className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${roundingUnit === u ? 'bg-white text-brand-600 shadow-sm' : 'text-earth-400'}`}
+                                        >
+                                            {u}円
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 mb-8 text-center">
+                                {settlement.plans.map((p, i) => (
+                                    <div key={i} className="flex items-center gap-3 animate-slide-up">
+                                        <div className="flex-1 bg-brand-50/50 p-4 rounded-3xl border border-brand-100 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-sm font-black text-earth-800">{p.from}</span>
+                                                <ChevronRight className="w-4 h-4 text-brand-400" />
+                                                <span className="text-sm font-black text-earth-800">{p.to}</span>
+                                            </div>
+                                            <div className="text-lg font-black text-brand-600">
+                                                {p.amount.toLocaleString()}<span className="text-[10px] ml-0.5">円</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {settlement.plans.length === 0 && members.length > 0 && (
+                                    <p className="text-center py-6 text-earth-400 text-sm font-bold bg-earth-50 rounded-2xl">精算の必要はありません</p>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={copyToLine}
+                                className="w-full bg-brand-600 text-white rounded-2xl h-16 font-black text-base flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-brand-200"
+                            >
+                                <Share2 className="w-5 h-5" />
+                                <span>結果を共有する</span>
+                            </button>
+                            
+                            <div className="mt-8 mb-4 flex flex-col items-center min-h-[60px]">
+                                <div className="text-xs text-gray-400 mb-2">スポンサーリンク</div>
+                                <div id="admax-travel" className="w-full flex justify-center"></div>
+                            </div>
+
+                            {settlement.surplus > 0 && (
+                                <div className="mt-4 flex items-center gap-2 justify-center text-[10px] font-bold text-earth-400 bg-earth-50 py-2 rounded-xl">
+                                    <Info className="w-3 h-3" />
+                                    <span>端数の余り: {settlement.surplus.toLocaleString()}円（幹事へ）</span>
+                                </div>
+                            )}
+                        </section>
+
+                        {/* SEO Contents / Footer */}
+                        <section className="px-2 pt-8 space-y-8">
+                            <div className="border-t border-earth-200 pt-8 mt-12">
+                                <h4 className="text-lg font-black text-earth-800 mb-4">旅行の精算をスムーズにするコツ</h4>
+                                <div className="space-y-4 text-sm text-earth-500 leading-relaxed font-medium">
+                                    <p>旅行やキャンプでは、レンタカーを借りる人、食材を買う人、宿代をまとめて払う人など、支払いがバラバラになりがちです。これらを一人ずつ個別計算すると非常に複雑になります。</p>
+                                    <p>このツールでは、全員の「支払い済み合計」を合算し、一人あたりの負担額を算出した後、**最小限の送金回数**（誰が誰にいくら払えば全員がトントンになるか）を導き出します。送金のやり取りを減らすことで、旅行後の面倒な空気をなくしましょう。</p>
+                                    <p>複数人でバラバラに支払った場合でも、一人がまとめて入力して結果をLINE等で共有するだけで、一瞬で精算が完了します。</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white p-4 rounded-2xl border border-earth-100 shadow-sm">
+                                    <h5 className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-1">Minimal Transfer</h5>
+                                    <p className="text-[11px] text-earth-400 font-bold leading-tight">送金回数を最小化するロジックを搭載</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-2xl border border-earth-100 shadow-sm">
+                                    <h5 className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-1">Mobile Native</h5>
+                                    <p className="text-[11px] text-earth-400 font-bold leading-tight">キャンプ場でも打ちやすい特大ボタン</p>
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <footer className="text-center py-12">
+                        <p className="text-[10px] text-earth-300 font-bold uppercase tracking-[0.2em]">© 2024 Smart Warikan Tool</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
