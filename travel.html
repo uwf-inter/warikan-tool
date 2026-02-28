@@ -126,6 +126,12 @@
 
 <body class="bg-brand-50">
     <div id="root"></div>
+    <div class="text-center text-[11px] text-earth-500 font-bold tracking-widest mt-4">
+        他のツールを使う：
+        <a href="shopping.html" class="underline text-orange-600">買い物比較</a> |
+        <a href="index.html" class="underline text-indigo-600">ホーム</a> |
+        <a href="golf.html" class="underline text-emerald-600">ゴルフ精算</a>
+    </div>
     <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
         <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
         <div class="min-h-[60px] flex items-center justify-center">
@@ -134,7 +140,7 @@
     </div>
 
     <script type="text/babel">
-        const { useState, useMemo } = React;
+        const { useState, useMemo, useRef } = React;
 
         // Robust Lucide icon helper (works with lucide and lucide-react UMD)
         window.getIcon = function (name) {
@@ -206,6 +212,13 @@
                                 </div>
                                 <span>ホーム（基本）</span>
                             </a>
+                            <a href="shopping.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-brand-50 transition-all text-earth-600 font-bold group">
+                                <div className="p-2.5 bg-earth-50 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all">
+                                    <ShoppingCart className="w-5 h-5 text-orange-500" />
+                                </div>
+                                <span className="flex-1">どっちがお得？（買い物比較）</span>
+                                <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
+                            </a>
                             <a href="golf.html" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50 transition-all text-earth-600 font-bold group">
                                 <div className="p-2.5 bg-earth-50 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all">
                                     <Car className="w-5 h-5" />
@@ -230,18 +243,19 @@
 
         const App = () => {
             const [isMenuOpen, setIsMenuOpen] = useState(false);
-            const [members, setMembers] = useState(['幹事', 'メンバーA', 'メンバーB']);
+            const [members, setMembers] = useState([]);
             const [expenses, setExpenses] = useState([]);
             const [newMemberName, setNewMemberName] = useState('');
             const [newExpense, setNewExpense] = useState({ payer: '', item: '', amount: '' });
             const [roundingUnit, setRoundingUnit] = useState(1);
-            
+            const nameInputRef = useRef(null);
 
             // メンバー追加
             const addMember = () => {
                 if (newMemberName.trim()) {
                     setMembers([...members, newMemberName.trim()]);
                     setNewMemberName('');
+                    if (nameInputRef.current) nameInputRef.current.focus();
                 }
             };
 
@@ -425,6 +439,11 @@
                                         </button>
                                     </div>
                                 ))}
+                                {members.length === 0 && (
+                                    <div className="w-full text-center py-6 text-earth-400 text-sm font-bold bg-earth-50 rounded-2xl">
+                                        まだメンバーが登録されていません
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex gap-2">
@@ -435,6 +454,7 @@
                                     value={newMemberName}
                                     onChange={(e) => setNewMemberName(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && addMember()}
+                                    ref={nameInputRef}
                                 />
                                 <button
                                     aria-label="メンバーを追加"

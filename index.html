@@ -120,6 +120,12 @@
             style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
+    <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
+        他のツールを使う：
+        <a href="shopping.html" class="underline text-orange-600">買い物比較</a> |
+        <a href="golf.html" class="underline text-emerald-600">ゴルフ精算</a> |
+        <a href="travel.html" class="underline text-orange-500">旅行・キャンプ</a>
+    </div>
     <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
         <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
         <div class="min-h-[60px] flex items-center justify-center">
@@ -204,6 +210,7 @@
             MapIcon: (props) => React.createElement(window.getIcon('Map'), { className: 'w-5 h-5', ...props }),
             Car: (props) => React.createElement(window.getIcon('Car'), { className: 'w-5 h-5', ...props }),
             Backpack: (props) => React.createElement(window.getIcon('Backpack'), { className: 'w-5 h-5', ...props }),
+            ShoppingCart: (props) => React.createElement(window.getIcon('ShoppingCart'), { className: 'w-5 h-5 text-orange-500', ...props }),
         };
     </script>
     <script>
@@ -406,6 +413,13 @@
                                 <Home />
                                 <span>ホーム</span>
                             </a>
+                        <a href="shopping.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 text-slate-700 font-bold transition-colors">
+                            <div className="flex items-center gap-4">
+                                <window.Icons.ShoppingCart />
+                                <span>どっちがお得？（買い物比較）</span>
+                            </div>
+                            <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
+                        </a>
                             <a href="golf.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 text-slate-700 font-bold transition-colors">
                                 <div className="flex items-center gap-4">
                                     <Car className="text-emerald-500" />
@@ -464,6 +478,16 @@
                     </header>
 
                     <main className="max-w-xl mx-auto space-y-8 p-4 md:p-6 animate-slide-up">
+                        <a href="shopping.html" className="block bg-orange-50 border border-orange-200 rounded-3xl p-4 ring-1 ring-orange-100 hover:bg-orange-100 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-500 rounded-xl text-white"><window.Icons.ShoppingCart /></div>
+                                <div className="flex-1">
+                                    <div className="text-sm font-black text-orange-700">スーパーの買い物で迷ったらこれ！</div>
+                                    <div className="text-xs font-bold text-orange-600">買い物比較ツール（新機能）</div>
+                                </div>
+                                <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full">New</span>
+                            </div>
+                        </a>
                         {/* 1. 合計金額セクション */}
                         <section className="bg-white rounded-3xl p-6 shadow-premium border border-slate-200 relative overflow-hidden ring-1 ring-slate-100">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 -z-10 opacity-50"></div>

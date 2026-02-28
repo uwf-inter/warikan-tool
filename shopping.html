@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>どっちがお得？比較計算ツール</title>
+  <meta name="description" content="スーパーで片手操作できるA/B比較と割引計算ツール。100単位あたりの価格比較と割引計算を素早く行えます。">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              600: '#f97316'
+            }
+          },
+          screens: { xs: '375px' }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide-react@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+    body { font-family: 'Inter','Noto Sans JP',sans-serif; -webkit-tap-highlight-color: transparent; }
+    input[type="text"] { min-height: 56px; }
+    button { min-height: 56px; }
+  </style>
+</head>
+<body class="bg-orange-50">
+  <div id="root"></div>
+  <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
+    他のツールを使う：
+    <a href="index.html" class="underline text-indigo-600">ホーム</a> |
+    <a href="golf.html" class="underline text-emerald-600">ゴルフ精算</a> |
+    <a href="travel.html" class="underline text-orange-500">旅行・キャンプ</a>
+  </div>
+  <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
+    <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
+    <div class="min-h-[60px] flex items-center justify-center">
+      <script src="https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20"></script>
+    </div>
+  </div>
+  <script>
+    window.getIcon = function (name) {
+      if (window.LucideReact && window.LucideReact[name]) return window.LucideReact[name];
+      if (window.lucide && window.lucide[name]) {
+        const iconData = window.lucide[name];
+        if (Array.isArray(iconData)) {
+          return function (props) {
+            const renderNode = (node, key) => {
+              if (!node || !Array.isArray(node)) return null;
+              const [tag, attrs, children] = node;
+              const combined = key !== undefined ? { ...attrs, key } : attrs;
+              return React.createElement(tag, combined, children ? children.map((c, i) => renderNode(c, i)) : null);
+            };
+            return React.createElement('svg', {
+              xmlns: 'http://www.w3.org/2000/svg',
+              width: '24',
+              height: '24',
+              viewBox: '0 0 24 24',
+              fill: 'none',
+              stroke: 'currentColor',
+              strokeWidth: '2',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
+              ...props
+            }, iconData.map((c, i) => renderNode(c, i)));
+          };
+        }
+        if (typeof iconData === 'function') return iconData;
+      }
+      return (props) => React.createElement('span', { ...props }, '•');
+    };
+  </script>
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+    const Menu = window.getIcon('Menu');
+    const X = window.getIcon('X');
+    const ShoppingCart = window.getIcon('ShoppingCart');
+    const Percent = window.getIcon('Percent');
+    const Scale = window.getIcon('Scale');
+    const PackageIcon = window.getIcon('Package');
+    const Droplet = window.getIcon('Droplet');
+    const Trophy = window.getIcon('Trophy');
+    const Plus = window.getIcon('Plus');
+    const Home = window.getIcon('Home');
+    const Car = window.getIcon('Car');
+    const Backpack = window.getIcon('Backpack');
+
+    const UnitButton = ({ label, active, onClick }) => (
+      <button
+        aria-pressed={active}
+        onClick={onClick}
+        className={`px-4 h-12 rounded-2xl text-sm font-bold transition-all ${active ? 'bg-white text-orange-600 shadow ring-1 ring-orange-100' : 'bg-white/60 text-gray-500 hover:bg-white'}`}
+      >
+        {label}
+      </button>
+    );
+
+    const App = () => {
+      const [isMenuOpen, setIsMenuOpen] = useState(false);
+      const [unit, setUnit] = useState('g');
+      const [priceA, setPriceA] = useState('');
+      const [qtyA, setQtyA] = useState('');
+      const [priceB, setPriceB] = useState('');
+      const [qtyB, setQtyB] = useState('');
+      const [origPrice, setOrigPrice] = useState('');
+      const [discounted, setDiscounted] = useState(null);
+      useEffect(() => {
+        const saved = localStorage.getItem('shopping_unit');
+        if (saved) setUnit(saved);
+      }, []);
+      useEffect(() => {
+        localStorage.setItem('shopping_unit', unit);
+      }, [unit]);
+      const num = (v) => {
+        const n = parseFloat(String(v).replace(',', '.'));
+        return isNaN(n) ? 0 : n;
+      };
+      const perA = useMemo(() => {
+        const p = num(priceA), q = num(qtyA);
+        return q > 0 ? (p / q) : 0;
+      }, [priceA, qtyA]);
+      const perB = useMemo(() => {
+        const p = num(priceB), q = num(qtyB);
+        return q > 0 ? (p / q) : 0;
+      }, [priceB, qtyB]);
+      const winner = useMemo(() => {
+        if (perA === 0 && perB === 0) return null;
+        if (perA === perB) return 'equal';
+        return perA < perB ? 'A' : 'B';
+      }, [perA, perB]);
+      const advantageText = useMemo(() => {
+        if (!winner || winner === 'equal') return '';
+        const diff = Math.abs(perA - perB);
+        const decimals = diff < 0.01 ? 3 : 2;
+        return `こちらの方が 1${unit}あたり ${diff.toFixed(decimals)}円 お得！`;
+      }, [perA, perB, winner, unit]);
+      const applyDiscount = (rate) => {
+        const o = num(origPrice);
+        if (o > 0) setDiscounted(Math.round(o * (1 - rate)));
+        else setDiscounted(null);
+      };
+      const UnitIcon = unit === 'g' ? Scale : unit === 'ml' ? Droplet : PackageIcon;
+      return (
+        <div className="min-h-screen pb-20">
+          <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-orange-100 px-6 py-4 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-2.5 rounded-2xl shadow-lg shadow-orange-200">
+                <ShoppingCart className="text-white w-5 h-5" />
+              </div>
+              <h1 className="text-lg font-black bg-gradient-to-r from-orange-600 to-orange-900 bg-clip-text text-transparent">どっちがお得？比較ツール</h1>
+            </div>
+            <button aria-label="メニューを開く" onClick={() => setIsMenuOpen(true)} className="w-12 h-12 flex items-center justify-center text-orange-600 bg-white rounded-2xl border border-orange-100 active:scale-95 transition-all shadow-sm">
+              <Menu />
+            </button>
+          </header>
+          <div className={`fixed inset-0 z-[100] transition-all duration-500 ${isMenuOpen ? 'visible' : 'invisible'}`}>
+            <div className={`absolute inset-0 bg-orange-900/40 backdrop-blur-sm transition-opacity duration-500 ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setIsMenuOpen(false)}></div>
+            <div className={`absolute right-0 top-0 bottom-0 w-[280px] bg-white shadow-2xl transition-transform duration-500 transform ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+              <div className="p-6 border-b border-orange-50 flex items-center justify-between">
+                <span className="text-lg font-bold text-orange-900">メニュー</span>
+                <button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 flex items-center justify-center text-orange-400 hover:text-orange-600">
+                  <X />
+                </button>
+              </div>
+              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                <a href="index.html" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-orange-50 text-orange-900 font-bold transition-colors">
+                  <div className="p-2.5 bg-orange-50 rounded-xl"><Home className="w-5 h-5" /></div>
+                  <span>ホーム（飲み会割り勘）</span>
+                </a>
+                <a href="shopping.html" className="flex items-center justify-between p-4 rounded-2xl bg-orange-50 text-orange-700 font-bold">
+                  <ShoppingCart />
+                  <span className="flex-1 ml-4">どっちがお得？（買い物比較）</span>
+                  <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
+                </a>
+                <a href="golf.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-orange-50 text-orange-900 font-bold transition-colors">
+                  <div className="flex items-center gap-4">
+                    <Car className="w-5 h-5 text-emerald-600" />
+                    <span>ゴルフ精算（運転手割引）</span>
+                  </div>
+                </a>
+                <a href="travel.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-orange-50 text-orange-900 font-bold transition-colors">
+                  <div className="flex items-center gap-4">
+                    <Backpack className="w-5 h-5 text-orange-500" />
+                    <span>旅行・キャンプ（複数立替）</span>
+                  </div>
+                </a>
+              </nav>
+              <div className="p-8 border-t border-orange-50">
+                <p className="text-[10px] text-orange-300 font-bold text-center uppercase tracking-widest">Smart Warikan Tools</p>
+              </div>
+            </div>
+          </div>
+          <main className="max-w-xl mx-auto p-4 space-y-6">
+            <section className="bg-white rounded-3xl p-6 shadow-premium border border-orange-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <UnitIcon className="w-5 h-5 text-orange-600" />
+                  <span className="text-sm font-bold text-gray-700">比較単位</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <UnitButton label="g" active={unit === 'g'} onClick={() => setUnit('g')} />
+                  <UnitButton label="ml" active={unit === 'ml'} onClick={() => setUnit('ml')} />
+                  <UnitButton label="個" active={unit === '個'} onClick={() => setUnit('個')} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div className={`rounded-3xl p-5 border ${winner === 'A' ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-100'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-gray-700">商品A</span>
+                    </div>
+                    {winner === 'A' && (
+                      <div className="flex items-center gap-1 text-green-600 text-xs font-black">
+                        <Trophy className="w-4 h-4" /> WINNER
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="relative">
+                      <input
+                        aria-label="商品Aの価格"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="価格"
+                        className="w-full bg-white border border-orange-200 rounded-2xl h-14 px-4 text-sm font-bold focus:ring-2 focus:ring-orange-200 outline-none"
+                        value={priceA}
+                        onChange={(e) => setPriceA(e.target.value)}
+                      />
+                    </div>
+                    <div className="relative">
+                      <input
+                        aria-label="商品Aの容量"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder={`容量(${unit})`}
+                        className="w-full bg-white border border-orange-200 rounded-2xl h-14 px-4 text-sm font-bold focus:ring-2 focus:ring-orange-200 outline-none"
+                        value={qtyA}
+                        onChange={(e) => setQtyA(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 text-right">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">1{unit}あたり</div>
+                    <div className="text-2xl font-black">
+                      {perA > 0 ? (Math.abs(perA - perB) < 0.01 ? perA.toFixed(3) : perA.toFixed(2)) : '0'}
+                      <span className="text-xs ml-1">円</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={`rounded-3xl p-5 border ${winner === 'B' ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-100'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-gray-700">商品B</span>
+                    </div>
+                    {winner === 'B' && (
+                      <div className="flex items-center gap-1 text-green-600 text-xs font-black">
+                        <Trophy className="w-4 h-4" /> WINNER
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="relative">
+                      <input
+                        aria-label="商品Bの価格"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="価格"
+                        className="w-full bg-white border border-orange-200 rounded-2xl h-14 px-4 text-sm font-bold focus:ring-2 focus:ring-orange-200 outline-none"
+                        value={priceB}
+                        onChange={(e) => setPriceB(e.target.value)}
+                      />
+                    </div>
+                    <div className="relative">
+                      <input
+                        aria-label="商品Bの容量"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder={`容量(${unit})`}
+                        className="w-full bg-white border border-orange-200 rounded-2xl h-14 px-4 text-sm font-bold focus:ring-2 focus:ring-orange-200 outline-none"
+                        value={qtyB}
+                        onChange={(e) => setQtyB(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 text-right">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">1{unit}あたり</div>
+                    <div className="text-2xl font-black">
+                      {perB > 0 ? (Math.abs(perA - perB) < 0.01 ? perB.toFixed(3) : perB.toFixed(2)) : '0'}
+                      <span className="text-xs ml-1">円</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {winner && winner !== 'equal' && (
+                <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-4 text-center text-sm font-bold text-green-700">{advantageText}</div>
+              )}
+              {winner === 'equal' && (
+                <div className="mt-4 bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center text-sm font-bold text-gray-600">同じ価格帯です</div>
+              )}
+            </section>
+            <section className="bg-white rounded-3xl p-6 shadow-premium border border-orange-100">
+              <div className="flex items-center gap-2 mb-4">
+                <Percent className="w-5 h-5 text-orange-600" />
+                <span className="text-sm font-bold text-gray-700">割引価格計算機</span>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <input
+                  aria-label="元の価格"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="元の価格"
+                  className="w-full bg-white border border-orange-200 rounded-2xl h-14 px-4 text-sm font-bold focus:ring-2 focus:ring-orange-200 outline-none"
+                  value={origPrice}
+                  onChange={(e) => setOrigPrice(e.target.value)}
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  <button aria-label="10%引" onClick={() => applyDiscount(0.10)} className="h-14 rounded-2xl bg-[#4CD964] text-white font-black text-sm active:scale-95 transition-all">10%引</button>
+                  <button aria-label="2割引" onClick={() => applyDiscount(0.20)} className="h-14 rounded-2xl bg-[#FF4500] text-white font-black text-sm active:scale-95 transition-all">2割引</button>
+                  <button aria-label="半額" onClick={() => applyDiscount(0.50)} className="h-14 rounded-2xl bg-gray-900 text-white font-black text-sm active:scale-95 transition-all">半額</button>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">最終価格</div>
+                  <div className="text-3xl font-black">{discounted ? discounted.toLocaleString() : 0}<span className="text-sm ml-1">円</span></div>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      );
+    };
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

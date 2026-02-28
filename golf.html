@@ -112,6 +112,12 @@
 
 <body class="bg-slate-50">
     <div id="root"></div>
+    <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
+        他のツールを使う：
+        <a href="shopping.html" class="underline text-orange-600">買い物比較</a> |
+        <a href="index.html" class="underline text-indigo-600">ホーム</a> |
+        <a href="travel.html" class="underline text-orange-500">旅行・キャンプ</a>
+    </div>
     <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
         <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
         <div class="min-h-[60px] flex items-center justify-center">
@@ -164,6 +170,7 @@
 
         window.Icons = {
             Car: (props) => React.createElement(window.getIcon('Car'), { className: 'w-6 h-6', ...props }),
+            ShoppingCart: (props) => React.createElement(window.getIcon('ShoppingCart'), { className: 'w-5 h-5 text-orange-500', ...props }),
             Fuel: (props) => React.createElement(window.getIcon('Fuel'), { className: 'w-5 h-5 text-emerald-500', ...props }),
             Milestone: (props) => React.createElement(window.getIcon('Milestone'), { className: 'w-5 h-5 text-emerald-500', ...props }),
             UsersIcon: (props) => React.createElement(window.getIcon('Users'), { className: 'w-5 h-5 text-emerald-500', ...props }),
@@ -282,6 +289,13 @@
                             <a href="index.html" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-emerald-50 text-emerald-900 font-bold transition-colors">
                                 <Home />
                                 <span>ホーム（基本）</span>
+                            </a>
+                            <a href="shopping.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-emerald-50 text-emerald-900 font-bold transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <window.Icons.ShoppingCart />
+                                    <span>どっちがお得？（買い物比較）</span>
+                                </div>
+                                <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
                             </a>
                             <a href="golf.html" className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 text-emerald-700 font-bold">
                                 <Car />
