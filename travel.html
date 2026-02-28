@@ -21,36 +21,7 @@
       }
     }
     </script>
-    <script>
-        (function () {
-            class AdmaxSlot extends HTMLElement {
-                connectedCallback() {
-                    if (this._loaded) return;
-                    this._loaded = true;
-                    const root = this.attachShadow({ mode: 'open' });
-                    const wrap = document.createElement('div');
-                    wrap.style.minHeight = '60px';
-                    wrap.style.display = 'flex';
-                    wrap.style.flexDirection = 'column';
-                    wrap.style.alignItems = 'center';
-                    const label = document.createElement('div');
-                    label.textContent = 'スポンサーリンク';
-                    label.style.fontSize = '0.75rem';
-                    label.style.color = '#9ca3af';
-                    label.style.marginBottom = '0.5rem';
-                    const s = document.createElement('script');
-                    s.src = 'https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20';
-                    s.async = true;
-                    wrap.appendChild(label);
-                    wrap.appendChild(s);
-                    root.appendChild(wrap);
-                }
-            }
-            if (!customElements.get('admax-slot')) {
-                customElements.define('admax-slot', AdmaxSlot);
-            }
-        })();
-    </script>
+    
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -155,9 +126,15 @@
 
 <body class="bg-brand-50">
     <div id="root"></div>
+    <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
+        <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
+        <div class="min-h-[60px] flex items-center justify-center">
+            <script src="https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20"></script>
+        </div>
+    </div>
 
     <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
+        const { useState, useMemo } = React;
 
         // Lucide Icons initialization helper
         window.getIcon = function (name) {
@@ -233,7 +210,6 @@
             const [newExpense, setNewExpense] = useState({ payer: '', item: '', amount: '' });
             const [roundingUnit, setRoundingUnit] = useState(1);
             
-            useEffect(() => {}, []);
 
             // メンバー追加
             const addMember = () => {
@@ -590,9 +566,7 @@
                                 <span>結果を共有する</span>
                             </button>
                             
-                            <div className="mt-8 mb-4 flex flex-col items-center min-h-[60px]">
-                                <admax-slot></admax-slot>
-                            </div>
+                            
 
                             {settlement.surplus > 0 && (
                                 <div className="mt-4 flex items-center gap-2 justify-center text-[10px] font-bold text-earth-400 bg-earth-50 py-2 rounded-xl">
