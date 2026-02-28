@@ -21,6 +21,36 @@
       }
     }
     </script>
+    <script>
+        (function () {
+            class AdmaxSlot extends HTMLElement {
+                connectedCallback() {
+                    if (this._loaded) return;
+                    this._loaded = true;
+                    const root = this.attachShadow({ mode: 'open' });
+                    const wrap = document.createElement('div');
+                    wrap.style.minHeight = '60px';
+                    wrap.style.display = 'flex';
+                    wrap.style.flexDirection = 'column';
+                    wrap.style.alignItems = 'center';
+                    const label = document.createElement('div');
+                    label.textContent = 'スポンサーリンク';
+                    label.style.fontSize = '0.75rem';
+                    label.style.color = '#9ca3af';
+                    label.style.marginBottom = '0.5rem';
+                    const s = document.createElement('script');
+                    s.src = 'https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20';
+                    s.async = true;
+                    wrap.appendChild(label);
+                    wrap.appendChild(s);
+                    root.appendChild(wrap);
+                }
+            }
+            if (!customElements.get('admax-slot')) {
+                customElements.define('admax-slot', AdmaxSlot);
+            }
+        })();
+    </script>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -203,16 +233,7 @@
             const [newExpense, setNewExpense] = useState({ payer: '', item: '', amount: '' });
             const [roundingUnit, setRoundingUnit] = useState(1);
             
-            useEffect(() => {
-                const el = document.getElementById('admax-travel');
-                if (el && !el.dataset.loaded) {
-                    const s = document.createElement('script');
-                    s.src = 'https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20';
-                    s.async = true;
-                    el.appendChild(s);
-                    el.dataset.loaded = 'true';
-                }
-            }, []);
+            useEffect(() => {}, []);
 
             // メンバー追加
             const addMember = () => {
@@ -570,8 +591,7 @@
                             </button>
                             
                             <div className="mt-8 mb-4 flex flex-col items-center min-h-[60px]">
-                                <div className="text-xs text-gray-400 mb-2">スポンサーリンク</div>
-                                <div id="admax-travel" className="w-full flex justify-center"></div>
+                                <admax-slot></admax-slot>
                             </div>
 
                             {settlement.surplus > 0 && (
