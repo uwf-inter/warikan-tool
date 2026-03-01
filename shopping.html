@@ -2,9 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="theme-color" content="#f97316">
+  <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>どっちがお得？比較計算ツール</title>
-  <meta name="description" content="スーパーで片手操作できるA/B比較と割引計算ツール。100単位あたりの価格比較と割引計算を素早く行えます。">
+  <title>どっちがお得 計算 1g単価 | スーパー 価格比較・割引暗算補助ツール</title>
+  <meta name="description" content="スーパーで迷ったら1単位（1g/1個）あたりの単価を即比較。割引価格の暗算を補助し、片手操作で最適な選択をサポートします。">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -33,7 +35,27 @@
   </style>
 </head>
 <body class="bg-orange-50">
+  <div id="pwa-toast" class="fixed bottom-24 right-4 z-[60] hidden">
+    <div class="bg-white rounded-2xl shadow-lg border border-orange-200 p-3 flex items-center gap-2">
+      <div class="p-2 bg-orange-100 rounded-xl text-orange-700 text-sm font-black">PWA</div>
+      <div class="flex-1">
+        <div class="text-xs font-black text-slate-800">ホーム画面に追加して、すぐ比較</div>
+        <div class="text-[10px] text-slate-500 font-bold">検索の手間ゼロ・一部オフライン</div>
+      </div>
+      <button id="pwa-toast-action" class="px-2 h-8 rounded-xl bg-orange-600 text-white text-[11px] font-black">追加</button>
+      <button id="pwa-toast-close" class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
+    </div>
+  </div>
   <div id="root"></div>
+  <section class="max-w-xl mx-auto px-4 mt-8">
+    <h2 class="text-sm font-black text-orange-900 mb-2">このツールの特徴（買い物比較）</h2>
+    <p class="text-[13px] leading-6 text-slate-700 font-medium">
+      「どっちがお得 計算 1g単価」を重視した買い物比較ツールです。商品A/Bの価格と容量を入力すると、1単位（1g/1個/1ml）あたりの単価を即時計算し、
+      安い方をWINNERとして強調表示。わずかな差でも小数第3位まで表示して判断を助けます。さらに「割引価格 暗算 補助」機能として、10%引、2割引、半額ボタンで
+      最終価格を即計算。片手操作前提の大きな入力欄と数値キーボード（inputmode=&quot;decimal&quot;）により、棚の前でも素早く比較できます。単位の選択は
+      ブラウザに保存され、次回起動時も同じ単位で比較開始。買い物の迷いを最小化し、納得のいく価格判断をサポートします。
+    </p>
+  </section>
   <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
     他のツールを使う：
     <a href="index.html" class="underline text-indigo-600">ホーム</a> |
@@ -146,6 +168,24 @@
         const o = num(origPrice);
         if (o > 0) setDiscounted(Math.round(o * (1 - rate)));
         else setDiscounted(null);
+      };
+      const shareComparison = () => {
+        const winnerText = !winner ? '比較データを入力してください' :
+          (winner === 'equal' ? '単価は同じです' : `WINNER: 商品${winner}`);
+        const text = [
+          '【買い物比較】単価チェック',
+          `商品A: 1${unit}あたり ${perA > 0 ? (Math.abs(perA - perB) < 0.01 ? perA.toFixed(3) : perA.toFixed(2)) : '0'}円`,
+          `商品B: 1${unit}あたり ${perB > 0 ? (Math.abs(perA - perB) < 0.01 ? perB.toFixed(3) : perB.toFixed(2)) : '0'}円`,
+          winnerText,
+          advantageText || '',
+          `--- どっちがお得？1g単価比較ツール ${window.location.href}`
+        ].filter(Boolean).join('\n');
+        if (navigator.share) {
+          navigator.share({ text }).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(text);
+          alert('クリップボードにコピーしました！');
+        }
       };
       const UnitIcon = unit === 'g' ? Scale : unit === 'ml' ? Droplet : PackageIcon;
       return (
@@ -305,6 +345,14 @@
               {winner === 'equal' && (
                 <div className="mt-4 bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center text-sm font-bold text-gray-600">同じ価格帯です</div>
               )}
+              <div className="mt-4">
+                <button onClick={shareComparison} className="w-full h-12 rounded-2xl bg-orange-600 text-white font-black text-sm active:scale-95 transition-all">
+                  結果をコピー・共有
+                </button>
+                <div className="mt-2 text-[11px] text-orange-600 text-center">
+                  友達にURLも一緒に送れます
+                </div>
+              </div>
             </section>
             <section className="bg-white rounded-3xl p-6 shadow-premium border border-orange-100">
               <div className="flex items-center gap-2 mb-4">
@@ -338,6 +386,32 @@
     };
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
+  </script>
+  <script>
+    (function () {
+      var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+      var deferredPrompt = null;
+      var toast = document.getElementById('pwa-toast');
+      var actionBtn = document.getElementById('pwa-toast-action');
+      var closeBtn = document.getElementById('pwa-toast-close');
+      var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+      function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+      window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+      var ua = navigator.userAgent;
+      var isIOS = /iPhone|iPad|iPod/.test(ua);
+      var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+      if (!isStandalone && isMobile && isIOS && isSafari) {
+        setTimeout(showToast, 5000);
+        actionBtn.textContent = '手順を見る';
+        actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+      } else {
+        actionBtn.onclick = function () {
+          if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+        };
+      }
+      closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+    })();
   </script>
 </body>
 </html>

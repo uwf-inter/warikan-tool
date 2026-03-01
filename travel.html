@@ -3,9 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#ea580c">
+    <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅行・キャンプ専用！複数人の立て替えをまとめて精算する割り勘ツール</title>
-    <meta name="description" content="旅行やキャンプでの複雑な立て替えを1分で解決。誰が何に対していくら払ったかを入力するだけで、最小限の送金回数で精算プランを提示します。LINE共有も対応。">
+    <title>旅行 立て替え 複数人 計算 | キャンプ 買い出し 割り勘 ツール</title>
+    <meta name="description" content="旅行やキャンプの複数人立て替えを公平に精算。誰が誰にいくら払うかを最小送金回数で提示し、買い出しや宿代の割り勘を片手操作で完結できます。">
 
     <script type="application/ld+json">
     {
@@ -125,13 +127,59 @@
 </head>
 
 <body class="bg-brand-50">
+    <div id="pwa-toast" class="fixed bottom-24 right-4 z-[60] hidden">
+        <div class="bg-white rounded-2xl shadow-lg border border-earth-200 p-3 flex items-center gap-2">
+            <div class="p-2 bg-brand-100 rounded-xl text-brand-700 text-sm font-black">PWA</div>
+            <div class="flex-1">
+                <div class="text-xs font-black text-earth-800">ホーム画面に追加して、旅先でもすぐ精算</div>
+                <div class="text-[10px] text-earth-500 font-bold">検索の手間ゼロ・一部オフライン</div>
+            </div>
+            <button id="pwa-toast-action" class="px-2 h-8 rounded-xl bg-brand-600 text-white text-[11px] font-black">追加</button>
+            <button id="pwa-toast-close" class="px-2 h-8 rounded-xl bg-earth-100 text-earth-700 text-[11px] font-bold">×</button>
+        </div>
+    </div>
     <div id="root"></div>
+    <section class="max-w-xl mx-auto px-4 mt-8">
+        <h2 class="text-sm font-black text-earth-800 mb-2">ご利用ガイド（旅行・キャンプ）</h2>
+        <p class="text-[13px] leading-6 text-earth-600 font-medium">
+            本ツールは「旅行 立て替え 複数人 計算」「キャンプ 買い出し 割り勘 ツール」に対応し、複雑な精算を簡潔に整理します。宿代、レンタカー、食材などの立て替えを入力すると、
+            各人の支払い済み総額と人数から1人あたり負担を導き、誰が誰にいくら払えば良いかを最小送金回数で提示します。金額は1円単位から端数調整まで柔軟に設定でき、
+            送金指示が明確に表示されるため、旅行後の面倒なやり取りを減らせます。キャンプなど現場でも片手操作可能な大きな入力欄とボタンで、短時間で公平な精算が完了。
+            計算結果はすぐに共有でき、メンバー全員が納得できる透明性を保てます。
+        </p>
+    </section>
     <div class="text-center text-[11px] text-earth-500 font-bold tracking-widest mt-4">
         他のツールを使う：
         <a href="shopping.html" class="underline text-orange-600">買い物比較</a> |
         <a href="index.html" class="underline text-indigo-600">ホーム</a> |
         <a href="golf.html" class="underline text-emerald-600">ゴルフ精算</a>
     </div>
+    <script>
+        (function () {
+            var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+            var deferredPrompt = null;
+            var toast = document.getElementById('pwa-toast');
+            var actionBtn = document.getElementById('pwa-toast-action');
+            var closeBtn = document.getElementById('pwa-toast-close');
+            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+            function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+            window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+            var ua = navigator.userAgent;
+            var isIOS = /iPhone|iPad|iPod/.test(ua);
+            var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+            if (!isStandalone && isMobile && isIOS && isSafari) {
+                setTimeout(showToast, 5000);
+                actionBtn.textContent = '手順を見る';
+                actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+            } else {
+                actionBtn.onclick = function () {
+                    if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+                };
+            }
+            closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+        })();
+    </script>
     <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
         <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
         <div class="min-h-[60px] flex items-center justify-center">
@@ -190,6 +238,7 @@
         const ChevronRight = window.getIcon('ChevronRight');
         const Info = window.getIcon('Info');
         const Share2 = window.getIcon('Share2');
+        const ShoppingCart = window.getIcon('ShoppingCart');
 
         const NavMenu = ({ isOpen, onClose }) => {
             return (
@@ -353,7 +402,7 @@
                         text += `${p.from}さん → ${p.to}さんへ: ${p.amount.toLocaleString()}円\n`;
                     });
                 }
-                text += `\n#旅行精算 #割り勘ツール`;
+                text += `\n--- 旅行・キャンプの複数立替精算はこちら ${window.location.href}`;
 
                 if (navigator.share) {
                     navigator.share({ title: '旅行の精算', text }).catch(() => { });
@@ -614,6 +663,9 @@
                                 <Share2 className="w-5 h-5" />
                                 <span>結果を共有する</span>
                             </button>
+                            <div className="mt-2 text-[11px] text-brand-600 text-center">
+                                友達にURLも一緒に送れます
+                            </div>
                             
                             
 

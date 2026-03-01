@@ -14,8 +14,10 @@
         })(window, document, 'script', 'dataLayer', 'GTM-5ZQZCG5P');</script>
     <!-- End Google Tag Manager -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>スマート割り勘 | モバイル専用割り勘計算ツール</title>
-    <meta name="description" content="完全無料でスマホ対応。10円・100円単位の端数調整やLINE共有ができる高機能な割り勘計算ツール。合コン、飲み会、旅行の精算をスマートに。">
+    <meta name="theme-color" content="#f97316">
+    <link rel="manifest" href="manifest.json">
+    <title>飲み会 割り勘 精算ツール | 幹事が楽になる 10円単位切り上げ計算</title>
+    <meta name="description" content="飲み会の割り勘を素早く公平に。10円単位の切り上げ計算で不足ゼロ、幹事が楽にする精算ツール。先払いの管理やLINE共有にも対応。">
 
     <script type="application/ld+json">
     {
@@ -119,7 +121,28 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5ZQZCG5P" height="0" width="0"
             style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    <div id="pwa-toast" class="fixed bottom-24 right-4 z-[60] hidden">
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-3 flex items-center gap-2">
+            <div class="p-2 bg-indigo-100 rounded-xl text-indigo-700 text-sm font-black">PWA</div>
+            <div class="flex-1">
+                <div class="text-xs font-black text-slate-800">ホーム画面に追加して、すぐに計算</div>
+                <div class="text-[10px] text-slate-500 font-bold">検索の手間ゼロ・一部オフライン</div>
+            </div>
+            <button id="pwa-toast-action" class="px-2 h-8 rounded-xl bg-indigo-600 text-white text-[11px] font-black">追加</button>
+            <button id="pwa-toast-close" class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
+        </div>
+    </div>
     <div id="root"></div>
+    <section class="max-w-xl mx-auto px-4 mt-8">
+        <h2 class="text-sm font-black text-slate-800 mb-2">ご利用ガイド（飲み会割り勘）</h2>
+        <p class="text-[13px] leading-6 text-slate-600 font-medium">
+            本ツールは「飲み会 割り勘 精算ツール」として、幹事の負担を軽減するために設計されています。合計金額と先払いを入力し、各メンバーの負担割合を指定するだけで、
+            10円単位の切り上げ計算により不足が出ないように精算額を自動算出します。先払いの合計から割り勘対象額を求め、重み付けした各人の負担額を算出した上で、
+            実際の送金指示（誰が誰にいくら払うか）を表示。端数の「お釣り」を明確化できるため、幹事の精算がスムーズになります。飲み会の会計ミスを減らしたい、
+            幹事を楽にするツールが欲しい、10円単位で公平に分けたいといったニーズに最適です。スマホ片手で操作できる大きな入力欄と、押しやすいボタン設計により、
+            現場でも直感的に使えます。計算結果はワンタップでLINE共有可能。初めての方は合計金額を入力し、先払いを登録してから割合を調整すると、すぐに最適な精算案が得られます。
+        </p>
+    </section>
     <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
         他のツールを使う：
         <a href="shopping.html" class="underline text-orange-600">買い物比較</a> |
@@ -133,6 +156,33 @@
         </div>
     </div>
 
+    <script>
+        (function () {
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');
+            var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+            var deferredPrompt = null;
+            var toast = document.getElementById('pwa-toast');
+            var actionBtn = document.getElementById('pwa-toast-action');
+            var closeBtn = document.getElementById('pwa-toast-close');
+            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+            function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+            window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+            var ua = navigator.userAgent;
+            var isIOS = /iPhone|iPad|iPod/.test(ua);
+            var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+            if (!isStandalone && isMobile && isIOS && isSafari) {
+                setTimeout(showToast, 5000);
+                actionBtn.textContent = '手順を見る';
+                actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+            } else {
+                actionBtn.onclick = function () {
+                    if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+                };
+            }
+            closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+        })();
+    </script>
     <script>
         // Lucide Icons initialization helper (Robust version)
         window.getIcon = function (name) {
@@ -381,8 +431,7 @@
                     ),
                     surplusAmount > 0 ? `お釣り: ${surplusAmount.toLocaleString()}円` : "",
                     "",
-                    "計算はこちら:",
-                    window.location.href
+                    `--- 割り勘を楽にする「スマート精算」で計算しました ${window.location.href}`
                 ].join('\n');
 
                 if (navigator.share) {
@@ -710,7 +759,9 @@
                                         <Share2 className="w-5 h-5 text-indigo-300" />
                                         結果をLINE・クリップボードに共有
                                     </button>
-                                    
+                                    <div className="mt-2 text-[11px] text-indigo-200 text-center">
+                                        友達にURLも一緒に送れます
+                                    </div>
                                 </section>
                             )
                         }

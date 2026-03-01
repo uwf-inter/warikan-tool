@@ -3,9 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ゴルフ・ドライブ専用！ガソリン代・高速代も計算できる割り勘ツール</title>
-    <meta name="description" content="ゴルフや旅行のレンタカー代、ガソリン代、高速料金をスマートに割り勘。運転手への感謝割引機能付き。LINEへのコピーも1タップで完了！">
+    <title>ゴルフ 運転手お礼 計算 | 高速代・ガソリン代 割り勘 ツール</title>
+    <meta name="description" content="ゴルフの乗り合い精算に最適。運転手へのお礼額の計算、高速代・ガソリン代の割り勘を片手で素早く。感謝割引の設定で公平に精算できます。">
 
     <script type="application/ld+json">
     {
@@ -111,13 +113,59 @@
 </head>
 
 <body class="bg-slate-50">
+    <div id="pwa-toast" class="fixed bottom-24 right-4 z-[60] hidden">
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-3 flex items-center gap-2">
+            <div class="p-2 bg-emerald-100 rounded-xl text-emerald-700 text-sm font-black">PWA</div>
+            <div class="flex-1">
+                <div class="text-xs font-black text-slate-800">ホーム画面に追加して、すぐに精算</div>
+                <div class="text-[10px] text-slate-500 font-bold">検索の手間ゼロ・一部オフライン</div>
+            </div>
+            <button id="pwa-toast-action" class="px-2 h-8 rounded-xl bg-emerald-600 text-white text-[11px] font-black">追加</button>
+            <button id="pwa-toast-close" class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
+        </div>
+    </div>
     <div id="root"></div>
+    <section class="max-w-xl mx-auto px-4 mt-8">
+        <h2 class="text-sm font-black text-emerald-900 mb-2">ご利用ガイド（ゴルフ精算）</h2>
+        <p class="text-[13px] leading-6 text-slate-700 font-medium">
+            本ツールは「ゴルフ 運転手 お礼 計算」「高速代 ガソリン代 割り勘」に特化した乗り合い精算ツールです。レンタカー費、高速料金、ガソリン代などを入力すると、
+            参加人数に応じて1人あたりの負担を算出し、運転手へのお礼（感謝割引）を適用可能。ドライバーの負担を減らし、同乗者へ適切に再配分します。精算モードの切替や
+            端数処理により現場でのやり取りがスムーズになり、走行距離や当日のレシートに基づく費用感にも柔軟に対応可能です。片手操作できる大きな入力欄と明快なボタンで、
+            コース到着前後の短時間でも公平な精算が完了します。LINEへの共有機能により、メンバー全員へ透明な精算結果を通知できます。
+        </p>
+    </section>
     <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
         他のツールを使う：
         <a href="shopping.html" class="underline text-orange-600">買い物比較</a> |
         <a href="index.html" class="underline text-indigo-600">ホーム</a> |
         <a href="travel.html" class="underline text-orange-500">旅行・キャンプ</a>
     </div>
+    <script>
+        (function () {
+            var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+            var deferredPrompt = null;
+            var toast = document.getElementById('pwa-toast');
+            var actionBtn = document.getElementById('pwa-toast-action');
+            var closeBtn = document.getElementById('pwa-toast-close');
+            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+            function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+            window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+            var ua = navigator.userAgent;
+            var isIOS = /iPhone|iPad|iPod/.test(ua);
+            var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+            if (!isStandalone && isMobile && isIOS && isSafari) {
+                setTimeout(showToast, 5000);
+                actionBtn.textContent = '手順を見る';
+                actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+            } else {
+                actionBtn.onclick = function () {
+                    if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+                };
+            }
+            closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+        })();
+    </script>
     <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
         <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
         <div class="min-h-[60px] flex items-center justify-center">
@@ -260,8 +308,7 @@
                     `同乗者: ${results.passenger.toLocaleString()}円 (x${memberCount - 1}名)`,
                     results.surplus > 0 ? `お釣り(余り): ${results.surplus.toLocaleString()}円` : "",
                     `------------------`,
-                    `詳細はWebで：`,
-                    window.location.href
+                    `--- ゴルフの運転手お礼・高速代精算はこちら ${window.location.href}`
                 ].filter(Boolean).join('\n');
 
                 if (navigator.share) {
@@ -589,6 +636,9 @@
                                             <Share2 className="w-6 h-6" />
                                             結果をLINEにコピー
                                         </button>
+                                        <div className="mt-2 text-[11px] text-emerald-600 text-center">
+                                            友達にURLも一緒に送れます
+                                        </div>
         
                                     </div>
                                 ) : (
