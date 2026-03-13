@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="theme-color" content="#f97316">
@@ -25,15 +26,26 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://unpkg.com/lucide-react@latest"></script>
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+  <script src="https://unpkg.com/lucide-react@latest" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
-    body { font-family: 'Inter','Noto Sans JP',sans-serif; -webkit-tap-highlight-color: transparent; }
-    input[type="text"] { min-height: 56px; }
-    button { min-height: 56px; }
+
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input[type="text"] {
+      min-height: 56px;
+    }
+
+    button {
+      min-height: 56px;
+    }
   </style>
 </head>
+
 <body class="bg-orange-50">
   <div id="pwa-toast" class="fixed bottom-24 right-4 z-[60] hidden">
     <div class="bg-white rounded-2xl shadow-lg border border-orange-200 p-3 flex items-center gap-2">
@@ -42,8 +54,10 @@
         <div class="text-xs font-black text-slate-800">ホーム画面に追加して、すぐ比較</div>
         <div class="text-[10px] text-slate-500 font-bold">検索の手間ゼロ・一部オフライン</div>
       </div>
-      <button id="pwa-toast-action" class="px-2 h-8 rounded-xl bg-orange-600 text-white text-[11px] font-black">追加</button>
-      <button id="pwa-toast-close" class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
+      <button id="pwa-toast-action"
+        class="px-2 h-8 rounded-xl bg-orange-600 text-white text-[11px] font-black">追加</button>
+      <button id="pwa-toast-close"
+        class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
     </div>
   </div>
   <div id="root"></div>
@@ -100,10 +114,15 @@
       return (props) => React.createElement('span', { ...props }, '•');
     };
   </script>
-  <script type="text/babel">
+
+  <!-- Shared Components -->
+  <script src="shared-survey.js"></script>
+
+  <script type="text/babel" data-presets="react">
     const { useState, useMemo, useEffect } = React;
     const Menu = window.getIcon('Menu');
     const X = window.getIcon('X');
+    const Check = window.getIcon('Check');
     const ShoppingCart = window.getIcon('ShoppingCart');
     const Percent = window.getIcon('Percent');
     const Scale = window.getIcon('Scale');
@@ -114,6 +133,7 @@
     const Home = window.getIcon('Home');
     const Car = window.getIcon('Car');
     const Backpack = window.getIcon('Backpack');
+    const Heart = window.getIcon('Heart');
 
     const UnitButton = ({ label, active, onClick }) => (
       <button
@@ -134,6 +154,7 @@
       const [qtyB, setQtyB] = useState('');
       const [origPrice, setOrigPrice] = useState('');
       const [discounted, setDiscounted] = useState(null);
+
       useEffect(() => {
         const saved = localStorage.getItem('shopping_unit');
         if (saved) setUnit(saved);
@@ -181,7 +202,7 @@
           `--- どっちがお得？1g単価比較ツール ${window.location.href}`
         ].filter(Boolean).join('\n');
         if (navigator.share) {
-          navigator.share({ text }).catch(() => {});
+          navigator.share({ text }).catch(() => { });
         } else {
           navigator.clipboard.writeText(text);
           alert('クリップボードにコピーしました！');
@@ -232,6 +253,12 @@
                     <span>旅行・キャンプ（複数立替）</span>
                   </div>
                 </a>
+                <a href="couple.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-orange-50 text-orange-900 font-bold transition-colors">
+                  <div className="flex items-center gap-4">
+                    <Heart className="w-5 h-5 text-pink-500" />
+                    <span>カップル精算（収入比率）</span>
+                  </div>
+                </a>
               </nav>
               <div className="p-8 border-t border-orange-50">
                 <p className="text-[10px] text-orange-300 font-bold text-center uppercase tracking-widest">Smart Warikan Tools</p>
@@ -239,6 +266,7 @@
             </div>
           </div>
           <main className="max-w-xl mx-auto p-4 space-y-6">
+
             <section className="bg-white rounded-3xl p-6 shadow-premium border border-orange-100">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -380,13 +408,29 @@
                 </div>
               </div>
             </section>
+            <section className="bg-white rounded-3xl p-6 border border-orange-200 shadow-sm mb-32">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-slate-800">次に欲しい機能を教えてください</h3>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Survey</div>
+              </div>
+              <window.SurveyComponent
+                pageName="shopping"
+                themeColorClass="bg-orange-600"
+                hoverColorClass="hover:bg-orange-700"
+                activeColorClass="bg-orange-600"
+                lightColorClass="bg-orange-50 text-orange-600"
+              />
+            </section>
           </main>
+
+          {/* Removed Survey Modal handle in favor of shared component */}
         </div>
       );
     };
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
+
   <script>
     (function () {
       var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
@@ -414,4 +458,5 @@
     })();
   </script>
 </body>
+
 </html>

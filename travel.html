@@ -23,7 +23,8 @@
       }
     }
     </script>
-    
+
+
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -92,8 +93,11 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/lucide-react@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="https://unpkg.com/lucide-react@latest" defer></script>
+
+    <!-- Shared Components -->
+    <script src="shared-survey.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
@@ -134,8 +138,10 @@
                 <div class="text-xs font-black text-earth-800">ホーム画面に追加して、旅先でもすぐ精算</div>
                 <div class="text-[10px] text-earth-500 font-bold">検索の手間ゼロ・一部オフライン</div>
             </div>
-            <button id="pwa-toast-action" class="px-2 h-8 rounded-xl bg-brand-600 text-white text-[11px] font-black">追加</button>
-            <button id="pwa-toast-close" class="px-2 h-8 rounded-xl bg-earth-100 text-earth-700 text-[11px] font-bold">×</button>
+            <button id="pwa-toast-action"
+                class="px-2 h-8 rounded-xl bg-brand-600 text-white text-[11px] font-black">追加</button>
+            <button id="pwa-toast-close"
+                class="px-2 h-8 rounded-xl bg-earth-100 text-earth-700 text-[11px] font-bold">×</button>
         </div>
     </div>
     <div id="root"></div>
@@ -155,30 +161,30 @@
         <a href="golf.html" class="underline text-emerald-600">ゴルフ精算</a>
     </div>
     <script>
-        (function () {
-            var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
-            var deferredPrompt = null;
-            var toast = document.getElementById('pwa-toast');
-            var actionBtn = document.getElementById('pwa-toast-action');
-            var closeBtn = document.getElementById('pwa-toast-close');
-            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-            var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
-            function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
-            window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
-            var ua = navigator.userAgent;
-            var isIOS = /iPhone|iPad|iPod/.test(ua);
-            var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-            if (!isStandalone && isMobile && isIOS && isSafari) {
-                setTimeout(showToast, 5000);
-                actionBtn.textContent = '手順を見る';
-                actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
-            } else {
-                actionBtn.onclick = function () {
-                    if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
-                };
-            }
-            closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
-        })();
+            (function () {
+                var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+                var deferredPrompt = null;
+                var toast = document.getElementById('pwa-toast');
+                var actionBtn = document.getElementById('pwa-toast-action');
+                var closeBtn = document.getElementById('pwa-toast-close');
+                var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+                var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+                function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+                window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+                var ua = navigator.userAgent;
+                var isIOS = /iPhone|iPad|iPod/.test(ua);
+                var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+                if (!isStandalone && isMobile && isIOS && isSafari) {
+                    setTimeout(showToast, 5000);
+                    actionBtn.textContent = '手順を見る';
+                    actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+                } else {
+                    actionBtn.onclick = function () {
+                        if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+                    };
+                }
+                closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+            })();
     </script>
     <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
         <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
@@ -187,7 +193,7 @@
         </div>
     </div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="react">
         const { useState, useMemo, useRef } = React;
 
         // Robust Lucide icon helper (works with lucide and lucide-react UMD)
@@ -239,6 +245,7 @@
         const Info = window.getIcon('Info');
         const Share2 = window.getIcon('Share2');
         const ShoppingCart = window.getIcon('ShoppingCart');
+        const Heart = window.getIcon('Heart');
 
         const NavMenu = ({ isOpen, onClose }) => {
             return (
@@ -281,6 +288,12 @@
                                 <span className="flex-1">旅行・キャンプ</span>
                                 <div className="w-1.5 h-1.5 rounded-full bg-brand-500"></div>
                             </div>
+                            <a href="couple.html" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50 transition-all text-earth-600 font-bold group">
+                                <div className="p-2.5 bg-earth-50 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all">
+                                    <Heart className="w-5 h-5 text-pink-500" />
+                                </div>
+                                <span className="flex-1">カップル精算（収入比率）</span>
+                            </a>
                         </nav>
                         <div className="p-8 border-t border-earth-50 text-center">
                             <p className="text-[10px] text-earth-400 font-bold uppercase tracking-widest">Smart Warikan v2.1</p>
@@ -451,6 +464,7 @@
                             </h2>
                             <p className="mt-2 text-earth-500 text-sm font-medium">誰が何にいくら払ったかを入力するだけ。</p>
                         </div>
+
 
                         {/* Total Stats */}
                         <div className="bg-brand-600 rounded-4xl p-8 shadow-xl shadow-brand-200 text-white relative overflow-hidden">
@@ -666,8 +680,8 @@
                             <div className="mt-2 text-[11px] text-brand-600 text-center">
                                 友達にURLも一緒に送れます
                             </div>
-                            
-                            
+
+
 
                             {settlement.surplus > 0 && (
                                 <div className="mt-4 flex items-center gap-2 justify-center text-[10px] font-bold text-earth-400 bg-earth-50 py-2 rounded-xl">
@@ -675,6 +689,20 @@
                                     <span>端数の余り: {settlement.surplus.toLocaleString()}円（幹事へ）</span>
                                 </div>
                             )}
+                        </section>
+
+                        <section className="bg-white rounded-3xl p-6 border border-earth-200 shadow-sm mt-12 mb-8">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-bold text-earth-800">次に欲しい機能を教えてください</h3>
+                                <div className="text-[10px] font-bold text-earth-400 uppercase tracking-widest">Survey</div>
+                            </div>
+                            <window.SurveyComponent
+                                pageName="travel"
+                                themeColorClass="bg-brand-600"
+                                hoverColorClass="hover:bg-brand-700"
+                                activeColorClass="bg-brand-600"
+                                lightColorClass="bg-brand-50 text-brand-600"
+                            />
                         </section>
 
                         {/* SEO Contents / Footer */}
@@ -700,6 +728,8 @@
                             </div>
                         </section>
                     </main>
+
+                    {/* Removed Survey Modal handle in favor of shared component */}
 
                     <footer className="text-center py-12">
                         <p className="text-[10px] text-earth-300 font-bold uppercase tracking-[0.2em]">© 2024 Smart Warikan Tool</p>

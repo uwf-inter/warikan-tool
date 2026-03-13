@@ -23,7 +23,13 @@
       }
     }
     </script>
-    
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide-react@latest"></script>
+
+    <!-- Shared Components -->
+    <script src="shared-survey.js"></script>
+
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,13 +55,13 @@
     </script>
 
     <!-- React & Babel -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/lucide-react@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="https://unpkg.com/lucide-react@latest" defer></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap');
@@ -120,8 +126,10 @@
                 <div class="text-xs font-black text-slate-800">ホーム画面に追加して、すぐに精算</div>
                 <div class="text-[10px] text-slate-500 font-bold">検索の手間ゼロ・一部オフライン</div>
             </div>
-            <button id="pwa-toast-action" class="px-2 h-8 rounded-xl bg-emerald-600 text-white text-[11px] font-black">追加</button>
-            <button id="pwa-toast-close" class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
+            <button id="pwa-toast-action"
+                class="px-2 h-8 rounded-xl bg-emerald-600 text-white text-[11px] font-black">追加</button>
+            <button id="pwa-toast-close"
+                class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
         </div>
     </div>
     <div id="root"></div>
@@ -141,30 +149,30 @@
         <a href="travel.html" class="underline text-orange-500">旅行・キャンプ</a>
     </div>
     <script>
-        (function () {
-            var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
-            var deferredPrompt = null;
-            var toast = document.getElementById('pwa-toast');
-            var actionBtn = document.getElementById('pwa-toast-action');
-            var closeBtn = document.getElementById('pwa-toast-close');
-            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-            var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
-            function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
-            window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
-            var ua = navigator.userAgent;
-            var isIOS = /iPhone|iPad|iPod/.test(ua);
-            var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-            if (!isStandalone && isMobile && isIOS && isSafari) {
-                setTimeout(showToast, 5000);
-                actionBtn.textContent = '手順を見る';
-                actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
-            } else {
-                actionBtn.onclick = function () {
-                    if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
-                };
-            }
-            closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
-        })();
+            (function () {
+                var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+                var deferredPrompt = null;
+                var toast = document.getElementById('pwa-toast');
+                var actionBtn = document.getElementById('pwa-toast-action');
+                var closeBtn = document.getElementById('pwa-toast-close');
+                var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+                var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+                function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+                window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+                var ua = navigator.userAgent;
+                var isIOS = /iPhone|iPad|iPod/.test(ua);
+                var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+                if (!isStandalone && isMobile && isIOS && isSafari) {
+                    setTimeout(showToast, 5000);
+                    actionBtn.textContent = '手順を見る';
+                    actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+                } else {
+                    actionBtn.onclick = function () {
+                        if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+                    };
+                }
+                closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+            })();
     </script>
     <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
         <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
@@ -233,10 +241,11 @@
             Home: (props) => React.createElement(window.getIcon('Home'), { className: 'w-5 h-5', ...props }),
             Backpack: (props) => React.createElement(window.getIcon('Backpack'), { className: 'w-5 h-5', ...props }),
             GlassWater: (props) => React.createElement(window.getIcon('GlassWater'), { className: 'w-5 h-5', ...props }),
+            Heart: (props) => React.createElement(window.getIcon('Heart'), { className: 'w-5 h-5 text-pink-500', ...props }),
         };
     </script>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="react">
         const { useState, useMemo } = React;
         const { Car, Fuel, Milestone, UsersIcon, Gift, Share2, Check, PlusIcon, MinusIcon, InfoIcon, Menu, X, Home, Backpack, GlassWater } = window.Icons;
 
@@ -250,7 +259,6 @@
             const [roundingUnit, setRoundingUnit] = useState(100);
             const [calcMode, setCalcMode] = useState('surplus'); // 'surplus' or 'exact'
             const [isMenuOpen, setIsMenuOpen] = useState(false);
-            
 
             const totalAmount = carFee + highwayFee + fuelFee;
 
@@ -355,6 +363,12 @@
                                 </div>
                                 <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
                             </a>
+                            <a href="couple.html" className="flex items-center justify-between p-4 rounded-2xl hover:bg-emerald-50 text-emerald-900 font-bold transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <window.Icons.Heart />
+                                    <span>カップル精算（収入比率）</span>
+                                </div>
+                            </a>
                             <div className="flex items-center justify-between p-4 rounded-2xl text-emerald-900/30 font-bold cursor-not-allowed">
                                 <div className="flex items-center gap-4">
                                     <GlassWater />
@@ -411,7 +425,6 @@
                             </p>
                         </div>
 
-                        {/* 費用入力セクション */}
                         <section className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-emerald-100 space-y-8 ring-1 ring-emerald-500/5">
                             {/* 合計表示 (ライブアップデート) */}
                             <div className="text-center pb-6 border-b border-slate-100">
@@ -639,7 +652,7 @@
                                         <div className="mt-2 text-[11px] text-emerald-600 text-center">
                                             友達にURLも一緒に送れます
                                         </div>
-        
+
                                     </div>
                                 ) : (
                                     <div className="text-center py-16 text-slate-600 text-sm font-bold uppercase tracking-widest border-2 border-dashed border-slate-800 rounded-[2rem]">
@@ -647,6 +660,20 @@
                                     </div>
                                 )}
                             </div>
+                        </section>
+                        <section className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mt-8 mb-8">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-bold text-slate-800">次に欲しい機能を教えてください</h3>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Survey</div>
+                            </div>
+                            <window.SurveyComponent
+                                pageName="golf"
+                                themeColorClass="bg-emerald-600"
+                                hoverColorClass="hover:bg-emerald-700"
+                                activeColorClass="bg-emerald-600"
+                                lightColorClass="bg-emerald-50 text-emerald-600"
+                                choices={["スコア管理機能", "同伴者費用分割", "コース比較", "その他（自由入力）"]}
+                            />
                         </section>
 
                         {/* SEO Contents / Footer */}
@@ -681,6 +708,8 @@
                             </div>
                         </footer>
                     </main>
+
+                    {/* Removed Survey Modal handle in favor of shared component */}
                 </div>
             );
         };

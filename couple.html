@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <!-- デバッグ用テストスクリプト -->
+  <script>
+    console.log('=== SCRIPT EXECUTION TEST ===');
+    console.log('JavaScript is running!');
+    console.log('Current URL:', window.location.href);
+
+    // ServiceWorkerのキャッシュをクリア
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+          console.log('Unregistering SW:', registration.scope);
+          registration.unregister();
+        }
+      });
+    }
+
+    // キャッシュストレージをクリア
+    if ('caches' in window) {
+      caches.keys().then(function (names) {
+        names.forEach(function (name) {
+          console.log('Deleting cache:', name);
+          caches.delete(name);
+        });
+      });
+    }
+
+    console.log('=== END TEST ===');
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#ec4899">
+  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>同棲 生活費 割合 計算 | 家賃 割り勘 手取り比率 | カップル 共通財布 計算</title>
+  <meta name="description" content="共働きカップルやルームメイト向け。手取り収入比率で生活費を公平に分担。家賃や共通支出を自動計算し、不満の少ない割合で精算できます。">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'Noto Sans JP', 'sans-serif'] },
+          colors: {
+            rose: { 600: '#e11d48' },
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input[type="text"] {
+      min-height: 56px;
+    }
+
+    input[type="text"] {
+      min-height: 56px;
+    }
+
+    button {
+      min-height: 48px;
+    }
+  </style>
+  <script src="shared-survey.js"></script>
+</head>
+
+<body class="bg-gray-50">
+  <!-- デバッグ用テストスクリプト -->
+  <script>
+    console.log('=== BODY SCRIPT TEST ===');
+    console.log('Body script is running!');
+    console.log('Current page:', document.title);
+    console.log('=== END BODY TEST ===');
+  </script>
+
+  <div id="pwa-toast" class="fixed bottom-24 right-4 z-[60] hidden">
+    <div class="bg-white rounded-2xl shadow-lg border border-pink-200 p-3 flex items-center gap-2">
+      <div class="p-2 bg-pink-100 rounded-xl text-pink-700 text-sm font-black">PWA</div>
+      <div class="flex-1">
+        <div class="text-xs font-black text-slate-800">ホーム画面に追加して、すぐ計算</div>
+        <div class="text-[10px] text-slate-500 font-bold">検索の手間ゼロ・一部オフライン</div>
+      </div>
+      <button id="pwa-toast-action"
+        class="px-2 h-8 rounded-xl bg-pink-600 text-white text-[11px] font-black">追加</button>
+      <button id="pwa-toast-close"
+        class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
+    </div>
+  </div>
+  <div id="root"></div>
+  <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
+    他のツールを使う：
+    <a href="index.html" class="underline text-indigo-600">ホーム</a> |
+    <a href="golf.html" class="underline text-emerald-600">ゴルフ精算</a> |
+    <a href="travel.html" class="underline text-orange-500">旅行・キャンプ</a> |
+    <a href="shopping.html" class="underline text-orange-600">買い物比較</a>
+  </div>
+  <div id="admax-permanent-footer" class="mt-8 mb-10 flex flex-col items-center border-t border-gray-100 pt-8">
+    <span class="text-[10px] text-gray-400 mb-2">スポンサーリンク</span>
+    <div class="min-h-[60px] flex items-center justify-center">
+      <script src="https://adm.shinobi.jp/s/4ad8d351097023368734c13dc79d1a20"></script>
+    </div>
+  </div>
+  <script type="text/babel" data-presets="react">
+    const { useState, useMemo } = React;
+
+    // デバッグ用：Reactコンポーネントの状態を記録
+    console.log('=== React Component Debug ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Current Path:', window.location.pathname);
+    console.log('Document ready state:', document.readyState);
+    console.log('=== End Debug Info ===');
+
+    const App = () => {
+      console.log('App component rendering...');
+
+      const [isMenuOpen, setIsMenuOpen] = useState(false);
+      const [incomeA, setIncomeA] = useState('');
+      const [incomeB, setIncomeB] = useState('');
+      const [totalExpense, setTotalExpense] = useState('');
+
+      const num = (v) => {
+        const n = parseFloat(String(v).replace(',', '.'));
+        return isNaN(n) ? 0 : n;
+      };
+
+      const totals = useMemo(() => {
+        const a = num(incomeA);
+        const b = num(incomeB);
+        const t = num(totalExpense);
+        const sum = a + b;
+        if (sum <= 0 || t <= 0) return { aShare: 0, bShare: 0, aPct: 0, bPct: 0 };
+        const aPct = a / sum;
+        const bPct = b / sum;
+        return (
+          <div className="min-h-screen pb-24">
+            <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-pink-100 px-6 py-4 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-2.5 rounded-2xl shadow-lg">
+                  ❤️
+                </div>
+                <h1 className="text-lg font-black bg-gradient-to-r from-pink-600 to-pink-900 bg-clip-text text-transparent">カップル・同棲の生活費計算</h1>
+              </div>
+            </header>
+
+            <main className="max-w-xl mx-auto p-4 space-y-6">
+              <section className="bg-white rounded-3xl p-6 md:p-8 shadow-premium border border-slate-200 space-y-6">
+                <h2 className="text-lg font-black text-slate-800">同棲 生活費 割合 計算</h2>
+                <div className="grid gap-3">
+                  <p className="text-sm text-slate-700 font-medium">
+                    生活費は「手取り比率」で分けると、自然でムリがありません。毎月の合計額を入力して、A/Bの手取りに応じて割り振りましょう。
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Aの月収（手取り）</label>
+                    <input
+                      type="number"
+                      placeholder="Aの月収"
+                      value={incomeA}
+                      onChange={(e) => setIncomeA(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Bの月収（手取り）</label>
+                    <input
+                      type="number"
+                      placeholder="Bの月収"
+                      value={incomeB}
+                      onChange={(e) => setIncomeB(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">今月の共通支出</label>
+                    <input
+                      type="number"
+                      placeholder="支出"
+                      value={totalExpense}
+                      onChange={(e) => setTotalExpense(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className="bg-white rounded-3xl p-6 border border-pink-200 shadow-sm">
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
+                    <span className="text-2xl">💰</span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-black bg-gradient-to-r from-pink-600 to-pink-900 bg-clip-text text-transparent">
+                      {Math.round(aPct * 100)}% : {Math.round(bPct * 100)}%
+                    </p>
+                    <p className="text-sm text-slate-600">Aの負担率 : Bの負担率</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    <div className="text-center p-4 rounded-2xl bg-pink-50 border border-pink-100">
+                      <p className="text-2xl font-bold text-pink-600">{Math.round(t * aPct).toLocaleString()}円</p>
+                      <p className="text-xs text-slate-600 mt-1">Aの負担額</p>
+                    </div>
+                    <div className="text-center p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                      <p className="text-2xl font-bold text-blue-600">{Math.round(t * bPct).toLocaleString()}円</p>
+                      <p className="text-xs text-slate-600 mt-1">Bの負担額</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={doShare}
+                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-700 text-white font-black text-sm shadow-lg shadow-pink-200/50 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                >
+                  <span className="text-lg">📤</span>
+                  結果をLINE・クリップボードに共有
+                </button>
+              </section>
+
+              <section className="bg-white rounded-3xl p-6 border border-pink-200 shadow-sm mb-32">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-slate-800">次に欲しい機能を教えてください</h3>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Survey</div>
+                </div>
+                <window.SurveyComponent
+                  pageName="couple"
+                  themeColorClass="bg-pink-600"
+                  hoverColorClass="hover:bg-pink-700"
+                  activeColorClass="bg-pink-600"
+                  lightColorClass="bg-pink-50 text-pink-600"
+                />
+              </section>
+            </main>
+          </div>
+        );
+      }, [incomeA, incomeB, totalExpense]);
+
+      const shareText = () => {
+        const { aShare, bShare, aPct, bPct } = totals;
+        return `A: ${aShare}円(${aPct}%) B: ${bShare}円(${bPct}%)`;
+      };
+
+      const doShare = () => {
+        const text = shareText();
+        if (navigator.share) {
+          navigator.share({ text }).catch(() => { });
+        } else {
+          navigator.clipboard.writeText(text);
+          alert('クリップボードにコピーしました！');
+        }
+      };
+
+      return (
+        <div className="min-h-screen pb-24">
+          <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-pink-100 px-6 py-4 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-2.5 rounded-2xl shadow-lg shadow-pink-200">
+                ❤️
+              </div>
+              <h1 className="text-lg font-black bg-gradient-to-r from-pink-600 to-pink-900 bg-clip-text text-transparent">カップル・同棲の生活費計算</h1>
+            </div>
+          </header>
+
+          <main className="max-w-xl mx-auto p-4 space-y-6">
+            <section className="bg-white rounded-3xl p-6 md:p-8 shadow-premium border border-slate-200 space-y-6">
+              <h2 className="text-lg font-black text-slate-800">同棲 生活費 割合 計算</h2>
+              <div className="grid gap-3">
+                <p className="text-sm text-slate-700 font-medium">
+                  生活費は「手取り比率」で分けると、自然でムリがありません。毎月の合計額を入力して、A/Bの手取りに応じて割り振りましょう。
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Aの月収（手取り）</label>
+                  <input
+                    type="number"
+                    placeholder="Aの月収"
+                    value={incomeA}
+                    onChange={(e) => setIncomeA(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Bの月収（手取り）</label>
+                  <input
+                    type="number"
+                    placeholder="Bの月収"
+                    value={incomeB}
+                    onChange={(e) => setIncomeB(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">今月の共通支出</label>
+                  <input
+                    type="number"
+                    placeholder="支出"
+                    value={totalExpense}
+                    onChange={(e) => setTotalExpense(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-white rounded-3xl p-6 border border-pink-200 shadow-sm">
+              <div className="text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
+                  <span className="text-2xl">💰</span>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-3xl font-black bg-gradient-to-r from-pink-600 to-pink-900 bg-clip-text text-transparent">
+                    {totals.aPct}% : {totals.bPct}%
+                  </p>
+                  <p className="text-sm text-slate-600">Aの負担率 : Bの負担率</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 py-4">
+                  <div className="text-center p-4 rounded-2xl bg-pink-50 border border-pink-100">
+                    <p className="text-2xl font-bold text-pink-600">{totals.aShare.toLocaleString()}円</p>
+                    <p className="text-xs text-slate-600 mt-1">Aの負担額</p>
+                  </div>
+                  <div className="text-center p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                    <p className="text-2xl font-bold text-blue-600">{totals.bShare.toLocaleString()}円</p>
+                    <p className="text-xs text-slate-600 mt-1">Bの負担額</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={doShare}
+                className="w-full h-14 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-700 text-white font-black text-sm shadow-lg shadow-pink-200/50 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+              >
+                <span className="text-lg">📤</span>
+                結果をLINE・クリップボードに共有
+              </button>
+            </section>
+
+            <section className="bg-white rounded-3xl p-6 border border-pink-200 shadow-sm mb-32">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-slate-800">次に欲しい機能を教えてください</h3>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Survey</div>
+              </div>
+              <window.SurveyComponent
+                pageName="couple"
+                themeColorClass="bg-pink-600"
+                hoverColorClass="hover:bg-pink-700"
+                activeColorClass="bg-pink-600"
+                lightColorClass="bg-pink-50 text-pink-600"
+              />
+            </section>
+          </main>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+
+    // デバッグ用：Reactマウント前の状態を記録
+    console.log('=== React Mount Debug ===');
+    console.log('Root element found:', !!document.getElementById('root'));
+    console.log('Root element content before mount:', document.getElementById('root').innerHTML);
+    console.log('Current page title:', document.title);
+    console.log('=== End Mount Debug ===');
+
+    // Reactエラーバウンダリーを追加
+    const ErrorBoundary = class extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('=== React Error Boundary ===');
+        console.error('Error:', error);
+        console.error('Error Info:', errorInfo);
+        console.error('=== End React Error ===');
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return React.createElement('div', {
+            style: { padding: '20px', textAlign: 'center', color: 'red' }
+          }, [
+            React.createElement('h1', null, 'React Component Error'),
+            React.createElement('pre', null, this.state.error.toString()),
+            React.createElement('p', null, 'Please check console for details')
+          ]);
+        }
+        return this.props.children;
+      }
+    };
+
+    try {
+      root.render(React.createElement(ErrorBoundary, null, React.createElement(App)));
+    } catch (error) {
+      console.error('=== React Render Error ===');
+      console.error('Error:', error);
+      console.error('=== End Render Error ===');
+
+      // エラー時にシンプルなコンテンツを表示
+      document.getElementById('root').innerHTML = `
+        <div style="padding: 20px; text-align: center;">
+          <h1>React Error</h1>
+          <p>${error.toString()}</p>
+          <p>Please check console for details</p>
+        </div>
+      `;
+    }
+
+    // レンダリング完了後の状態を記録
+    setTimeout(() => {
+      console.log('=== After React Mount ===');
+      console.log('Root element content after mount:', document.getElementById('root').innerHTML.substring(0, 200) + '...');
+      console.log('Current page title:', document.title);
+      console.log('=== End After Mount Debug ===');
+    }, 1000);
+  </script>
+  <script>
+    // ページロード時のデバッグ情報
+    console.log('=== Page Load Debug ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Current Path:', window.location.pathname);
+    console.log('Document title:', document.title);
+    console.log('Document ready state:', document.readyState);
+    console.log('All script tags loaded:', document.querySelectorAll('script').length);
+    console.log('=== End Page Load Debug ===');
+
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('=== DOM Content Loaded ===');
+      console.log('Current URL:', window.location.href);
+      console.log('Current Path:', window.location.pathname);
+      console.log('Document title:', document.title);
+      console.log('=== End DOM Content Loaded ===');
+
+      // 共通コンポーネント化に伴い削除
+    });
+  </script>
+  <script>
+      // ServiceWorkerの登録を無効化（デバッグ用）
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          for (let registration of registrations) {
+            console.log('Unregistering SW:', registration.scope);
+            registration.unregister();
+          }
+        });
+      }
+
+      (function () {
+        var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+        var deferredPrompt = null;
+        // var toast = document.getElementById('pwa-toast'); // 一時的に無効化
+        var toast = null;
+        var actionBtn = document.getElementById('pwa-toast-action');
+        var closeBtn = document.getElementById('pwa-toast-close');
+        var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+        function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+        var ua = navigator.userAgent;
+        var isIOS = /iPhone|iPad|iPod/.test(ua);
+        var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+        if (!isStandalone && isMobile && isIOS && isSafari) {
+          setTimeout(showToast, 5000);
+          actionBtn.textContent = '手順を見る';
+          actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+        } else {
+          actionBtn.onclick = function () {
+            if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+          };
+        }
+        closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+      });
+  </script>
+</body>
+
+</html>

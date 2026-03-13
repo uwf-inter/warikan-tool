@@ -27,6 +27,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+  
+  // 広告ドメインはキャッシュしない
+  if (req.url.includes('adm.shinobi.jp') || req.url.includes('googleads')) {
+    return;
+  }
+  
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).catch(() => caches.match('/index.html'))
@@ -35,6 +41,10 @@ self.addEventListener('fetch', (event) => {
   }
   event.respondWith(
     caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+      // http/https 以外のリクエスト（chrome-extension等）はキャッシュしない
+      if (!req.url.startsWith('http')) {
+        return res;
+      }
       const resClone = res.clone();
       caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
       return res;
