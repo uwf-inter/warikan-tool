@@ -137,7 +137,12 @@
                 class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
         </div>
     </div>
-    <div id="root"></div>
+    <div id="root">
+        <div class="fixed inset-0 flex flex-col items-center justify-center z-[100] bg-gray-50">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
+            <p class="mt-4 text-[11px] font-bold tracking-widest text-indigo-600/80 uppercase">Loading...</p>
+        </div>
+    </div>
     <section class="max-w-xl mx-auto px-4 mt-8">
         <h2 class="text-sm font-black text-slate-800 mb-2">ご利用ガイド（飲み会割り勘）</h2>
         <p class="text-[13px] leading-6 text-slate-600 font-medium">

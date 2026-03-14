@@ -98,7 +98,12 @@
         class="px-2 h-8 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold">×</button>
     </div>
   </div>
-  <div id="root"></div>
+  <div id="root">
+    <div class="fixed inset-0 flex flex-col items-center justify-center z-[100] bg-pink-50">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-pink-200 border-t-pink-600"></div>
+      <p class="mt-4 text-[11px] font-bold tracking-widest text-pink-600/80 uppercase">Loading...</p>
+    </div>
+  </div>
   <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
     他のツールを使う：
     <a href="index.html" class="underline text-indigo-600">ホーム</a> |
@@ -449,41 +454,41 @@
     });
   </script>
   <script>
-      // ServiceWorkerの登録を無効化（デバッグ用）
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (registrations) {
-          for (let registration of registrations) {
-            console.log('Unregistering SW:', registration.scope);
-            registration.unregister();
-          }
-        });
-      }
-
-      (function () {
-        var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
-        var deferredPrompt = null;
-        // var toast = document.getElementById('pwa-toast'); // 一時的に無効化
-        var toast = null;
-        var actionBtn = document.getElementById('pwa-toast-action');
-        var closeBtn = document.getElementById('pwa-toast-close');
-        var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-        var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
-        function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
-        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
-        var ua = navigator.userAgent;
-        var isIOS = /iPhone|iPad|iPod/.test(ua);
-        var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-        if (!isStandalone && isMobile && isIOS && isSafari) {
-          setTimeout(showToast, 5000);
-          actionBtn.textContent = '手順を見る';
-          actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
-        } else {
-          actionBtn.onclick = function () {
-            if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
-          };
+    // ServiceWorkerの登録を無効化（デバッグ用）
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+          console.log('Unregistering SW:', registration.scope);
+          registration.unregister();
         }
-        closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
       });
+    }
+
+    (function () {
+      var dismissed = sessionStorage.getItem('pwaToastDismissed') === '1';
+      var deferredPrompt = null;
+      // var toast = document.getElementById('pwa-toast'); // 一時的に無効化
+      var toast = null;
+      var actionBtn = document.getElementById('pwa-toast-action');
+      var closeBtn = document.getElementById('pwa-toast-close');
+      var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      var isMobile = /iPhone|Android/.test(navigator.userAgent) && window.innerWidth < 768;
+      function showToast() { if (!isStandalone && isMobile && !dismissed) toast.classList.remove('hidden'); }
+      window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; setTimeout(showToast, 5000); });
+      var ua = navigator.userAgent;
+      var isIOS = /iPhone|iPad|iPod/.test(ua);
+      var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+      if (!isStandalone && isMobile && isIOS && isSafari) {
+        setTimeout(showToast, 5000);
+        actionBtn.textContent = '手順を見る';
+        actionBtn.onclick = function () { alert('共有ボタンから「ホーム画面に追加」を選択してください'); toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+      } else {
+        actionBtn.onclick = function () {
+          if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); deferredPrompt = null; }); }
+        };
+      }
+      closeBtn.onclick = function () { toast.classList.add('hidden'); sessionStorage.setItem('pwaToastDismissed', '1'); };
+    });
   </script>
 </body>
 
