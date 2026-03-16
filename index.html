@@ -92,9 +92,9 @@
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .shadow-premium {
@@ -116,6 +116,48 @@
                 transform: translateY(0);
             }
         }
+
+        /* クイック・スプラッシュ用スタイル */
+        .splash-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .feature-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .icon-glow {
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+        }
+
+        .fade-out-active {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
     </style>
 </head>
 
@@ -124,6 +166,81 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5ZQZCG5P" height="0" width="0"
             style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    
+    <!-- クイック・スプラッシュ画面 -->
+    <div id="splash-container" class="fixed inset-0 z-[100] splash-gradient flex items-center justify-center">
+        <!-- 閉じるボタン -->
+        <button 
+            id="splash-close" 
+            class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-all"
+        >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <!-- メインコンテンツ -->
+        <div class="text-center text-white px-6 max-w-sm mx-auto">
+            <!-- アプリタイトル -->
+            <div class="animate-fade-in mb-12">
+                <h1 class="text-3xl md:text-4xl font-black mb-2">スマート割り勘</h1>
+                <p class="text-white/80 text-sm">かんたん・あんしん・すぐつかえる</p>
+            </div>
+            
+            <!-- 特徴ポイント -->
+            <div class="space-y-6 animate-slide-up" style="animation-delay: 0.2s;">
+                <!-- ポイント1: ログイン不要 -->
+                <div class="feature-card rounded-2xl p-6 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center icon-glow">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-left">
+                        <div class="font-bold text-lg">🚀 ログイン不要</div>
+                        <div class="text-white/70 text-sm">すぐに使える</div>
+                    </div>
+                </div>
+                
+                <!-- ポイント2: LINEで共有 -->
+                <div class="feature-card rounded-2xl p-6 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center icon-glow">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 01-7.432 0m9.032-4.026A9.001 9.001 0 0112 3c-4.474 0-8.268 3.12-9.032 7.326m0 0A9.001 9.001 0 0012 21c4.474 0 8.268-3.12 9.032-7.326"></path>
+                        </svg>
+                    </div>
+                    <div class="text-left">
+                        <div class="font-bold text-lg">📱 LINEで共有</div>
+                        <div class="text-white/70 text-sm">結果をすぐ送れる</div>
+                    </div>
+                </div>
+                
+                <!-- ポイント3: データ保存なし -->
+                <div class="feature-card rounded-2xl p-6 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center icon-glow">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-left">
+                        <div class="font-bold text-lg">🔒 データ保存なし</div>
+                        <div class="text-white/70 text-sm">安心・安全</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- スタートボタン -->
+            <div class="mt-12 animate-slide-up" style="animation-delay: 0.4s;">
+                <button 
+                    id="splash-start" 
+                    class="bg-white text-purple-600 px-8 py-4 rounded-2xl font-black text-lg hover:bg-white/90 transition-all transform hover:scale-105 shadow-lg"
+                >
+                    はじめる
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <div id="pwa-toast" class="fixed bottom-24 right-4 z-[60] hidden">
         <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-3 flex items-center gap-2">
             <div class="p-2 bg-indigo-100 rounded-xl text-indigo-700 text-sm font-black">PWA</div>
@@ -143,7 +260,9 @@
             <p class="mt-4 text-[11px] font-bold tracking-widest text-indigo-600/80 uppercase">Loading...</p>
         </div>
     </div>
-    <section class="max-w-xl mx-auto px-4 mt-8">
+    
+    <!-- SEO用コンテンツ（ページ下部に配置） -->
+    <section class="max-w-xl mx-auto px-4 mt-8 opacity-0" style="display: none;">
         <h2 class="text-sm font-black text-slate-800 mb-2">ご利用ガイド（飲み会割り勘）</h2>
         <p class="text-[13px] leading-6 text-slate-600 font-medium">
             本ツールは「飲み会 割り勘 精算ツール」として、幹事の負担を軽減するために設計されています。合計金額と先払いを入力し、各メンバーの負担割合を指定するだけで、
@@ -153,7 +272,7 @@
             現場でも直感的に使えます。計算結果はワンタップでLINE共有可能。初めての方は合計金額を入力し、先払いを登録してから割合を調整すると、すぐに最適な精算案が得られます。
         </p>
     </section>
-    <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4">
+    <div class="text-center text-[11px] text-slate-500 font-bold tracking-widest mt-4" style="display: none;">
         他のツールを使う：
         <a href="shopping.html" class="underline text-orange-600">買い物比較</a> |
         <a href="golf.html" class="underline text-emerald-600">ゴルフ精算</a> |
@@ -557,16 +676,6 @@
                     </header>
 
                     <main className="max-w-xl mx-auto space-y-8 p-4 md:p-6 animate-slide-up">
-                        <a href="shopping.html" className="block bg-orange-50 border border-orange-200 rounded-3xl p-4 ring-1 ring-orange-100 hover:bg-orange-100 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-orange-500 rounded-xl text-white"><window.Icons.ShoppingCart /></div>
-                                <div className="flex-1">
-                                    <div className="text-sm font-black text-orange-700">スーパーの買い物で迷ったらこれ！</div>
-                                    <div className="text-xs font-bold text-orange-600">買い物比較ツール（新機能）</div>
-                                </div>
-                                <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full">New</span>
-                            </div>
-                        </a>
                         {/* 1. 合計金額セクション */}
                         <section className="bg-white rounded-3xl p-6 shadow-premium border border-slate-200 relative overflow-hidden ring-1 ring-slate-100">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 -z-10 opacity-50"></div>
@@ -792,7 +901,7 @@
                                     <div className="mt-2 text-[11px] text-indigo-200 text-center">
                                         友達にURLも一緒に送れます
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="mt-6 space-y-2">
                                         <h3 className="font-bold text-indigo-600">Q. ゴルフや旅行でのガソリン代はどうすればいい？</h3>
                                         <p className="text-sm text-slate-600 leading-relaxed">
                                             まず合計金額を入力し、運転手の方を「少ない」設定にするか、ガソリン代相当を「先払い」として登録することで、運転手の実質的な負担を軽減する調整が可能です。
@@ -800,6 +909,25 @@
                                     </div>
                                 </section>
                             )}
+
+                        {/* インラインプロモーション */}
+                        <section className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-3xl p-6 shadow-sm ring-1 ring-orange-100/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-500 rounded-xl text-white">
+                                    <window.Icons.ShoppingCart />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-sm font-bold text-orange-700">便利な新機能</span>
+                                        <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full">New</span>
+                                    </div>
+                                    <div className="text-xs font-bold text-orange-600">スーパーでの買い物に「どっちがお得？比較ツール」も使ってみてください</div>
+                                </div>
+                            </div>
+                            <a href="shopping.html" className="mt-4 block w-full bg-orange-500 text-white py-3 rounded-2xl text-sm font-bold hover:bg-orange-600 transition-colors text-center">
+                                買い物比較ツールを試す
+                            </a>
+                        </section>
 
                         {/* Survey Section */}
                         <section className="bg-white rounded-3xl p-6 shadow-premium border border-slate-200 mt-8">
@@ -851,6 +979,128 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+    </script>
+    
+    <!-- クイック・スプラッシュ管理スクリプト -->
+    <script>
+        // クイック・スプラッシュ管理クラス
+        class QuickSplash {
+            constructor() {
+                this.container = document.getElementById('splash-container');
+                this.closeBtn = document.getElementById('splash-close');
+                this.startBtn = document.getElementById('splash-start');
+                this.autoHideTimer = null;
+                this.isAnimating = false;
+                
+                this.init();
+            }
+            
+            init() {
+                // イベントリスナー設定
+                this.closeBtn.addEventListener('click', () => this.hide());
+                this.startBtn.addEventListener('click', () => this.hide());
+                
+                // セッションチェック
+                if (this.shouldShowSplash()) {
+                    this.show();
+                    this.startAutoHide();
+                    this.initMainContent();
+                } else {
+                    this.skipSplash();
+                }
+            }
+            
+            shouldShowSplash() {
+                // セッション中の再訪問をチェック
+                const sessionKey = 'splash_shown_session';
+                const currentSession = sessionStorage.getItem(sessionKey);
+                
+                if (currentSession) {
+                    return false; // このセッションでは既に表示済み
+                }
+                
+                // 初回訪問かどうかをチェック
+                const hasVisited = localStorage.getItem('has_visited_before');
+                if (!hasVisited) {
+                    // 初回訪問の場合
+                    localStorage.setItem('has_visited_before', 'true');
+                    sessionStorage.setItem(sessionKey, 'true');
+                    return true;
+                }
+                
+                // 再訪問の場合、セッションに記録
+                sessionStorage.setItem(sessionKey, 'true');
+                return false; // 再訪問時はスキップ
+            }
+            
+            show() {
+                this.container.style.display = 'flex';
+                this.container.classList.add('animate-fade-in');
+                this.isAnimating = true;
+            }
+            
+            hide() {
+                if (this.isAnimating) return;
+                
+                this.isAnimating = true;
+                clearTimeout(this.autoHideTimer);
+                
+                // フェードアウトアニメーション
+                this.container.classList.add('fade-out-active');
+                
+                setTimeout(() => {
+                    this.container.style.display = 'none';
+                    // メインコンテンツの表示を確保
+                    const mainContent = document.getElementById('root');
+                    if (mainContent) {
+                        mainContent.style.opacity = '1';
+                        mainContent.style.visibility = 'visible';
+                    }
+                }, 500);
+            }
+            
+            skipSplash() {
+                this.container.style.display = 'none';
+                // メインコンテンツの表示を確保
+                const mainContent = document.getElementById('root');
+                if (mainContent) {
+                    mainContent.style.opacity = '1';
+                    mainContent.style.visibility = 'visible';
+                }
+                this.initMainContent();
+            }
+            
+            startAutoHide() {
+                // 2秒後に自動で非表示
+                this.autoHideTimer = setTimeout(() => {
+                    this.hide();
+                }, 2000);
+            }
+            
+            initMainContent() {
+                // 裏側でメインコンテンツの初期化を開始
+                setTimeout(() => {
+                    console.log('メインコンテンツの初期化を開始...');
+                    
+                    // Reactアプリの初期化は既に開始されているため、
+                    // ここでは追加の初期化処理が必要な場合のみ実行
+                }, 100);
+            }
+        }
+        
+        // ページ読み込み完了後に初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new QuickSplash();
+        });
+        
+        // すでに読み込み済みの場合
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                new QuickSplash();
+            });
+        } else {
+            new QuickSplash();
+        }
     </script>
 </body>
 
